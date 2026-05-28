@@ -1,11 +1,10 @@
+import type { LucideIcon } from "lucide-react";
 import {
-  BatteryCharging,
   Car,
   LayoutDashboard,
   Settings,
   Zap,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 
 export const sidebarLinks: RouteItem[] = [
   {
@@ -17,11 +16,6 @@ export const sidebarLinks: RouteItem[] = [
     icon: Car,
     route: "/fleet",
     label: "Fleet",
-  },
-  {
-    icon: BatteryCharging,
-    route: "/sessions",
-    label: "Sessions",
   },
   {
     icon: Zap,
