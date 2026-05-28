@@ -5,22 +5,28 @@ export type SignalMode = "charge" | "hold" | "discharge";
 export interface CurrentHourSignal {
   mode: SignalMode;
   priceEurPerKwh: number;
-  carbonProxyGramsPerKwh: number;
+  nextPriceEurPerKwh: number | null;
   isFallback: boolean;
 }
 
 const FALLBACK: CurrentHourSignal = {
   mode: "hold",
   priceEurPerKwh: 0.22,
-  carbonProxyGramsPerKwh: 280,
+  nextPriceEurPerKwh: null,
   isFallback: true,
 };
+
+const HOUR_MS = 3_600_000;
 
 function quantile(sorted: number[], q: number): number {
   const pos = (sorted.length - 1) * q;
   const lo = Math.floor(pos);
   const hi = Math.ceil(pos);
   return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
+}
+
+function hourKey(iso: string): number {
+  return Math.floor(Date.parse(iso) / HOUR_MS) * HOUR_MS;
 }
 
 export function currentHourSignal(
@@ -33,32 +39,24 @@ export function currentHourSignal(
     .sort((a, b) => a - b);
   if (prices.length === 0) return FALLBACK;
 
-  const nowHourMs = Math.floor(now.getTime() / 3_600_000) * 3_600_000;
+  const nowHourMs = Math.floor(now.getTime() / HOUR_MS) * HOUR_MS;
   const current =
-    points.find((p) => {
-      const ms = Date.parse(p.timestamp);
-      return Math.floor(ms / 3_600_000) * 3_600_000 === nowHourMs;
-    }) ?? points[0];
+    points.find((p) => hourKey(p.timestamp) === nowHourMs) ?? points[0];
+  const next = points.find((p) => hourKey(p.timestamp) === nowHourMs + HOUR_MS);
+
   const priceMwh = current.priceEurPerMwh ?? prices[Math.floor(prices.length / 2)];
+  const nextPriceMwh = next?.priceEurPerMwh ?? null;
 
   const p25 = quantile(prices, 0.25);
   const p75 = quantile(prices, 0.75);
   const mode: SignalMode =
     priceMwh <= p25 ? "charge" : priceMwh >= p75 ? "discharge" : "hold";
 
-  // Transparent proxy: high price + low solar ⇒ dirtier grid. Not a real
-  // carbon-intensity feed (Electricity Maps is the follow-up). Anchored so a
-  // €60/MWh, zero-solar hour lands near ~300 g/kWh.
-  const solar = current.solarWPerM2 ?? 0;
-  const priceComponent = Math.max(0, Math.min(1, priceMwh / 120));
-  const solarComponent = Math.max(0, Math.min(1, solar / 800));
-  const carbonProxy =
-    120 + Math.round(priceComponent * 280 - solarComponent * 100);
-
   return {
     mode,
     priceEurPerKwh: Number((priceMwh / 1000).toFixed(3)),
-    carbonProxyGramsPerKwh: Math.max(60, Math.min(520, carbonProxy)),
+    nextPriceEurPerKwh:
+      nextPriceMwh === null ? null : Number((nextPriceMwh / 1000).toFixed(3)),
     isFallback: false,
   };
 }

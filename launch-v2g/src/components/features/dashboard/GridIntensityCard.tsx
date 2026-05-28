@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import LiveClock from "@/components/shared/atoms/LiveClock";
 import type { CurrentHourSignal, SignalMode } from "@/lib/signal/current_hour";
 import { cn } from "@/lib/utils";
 import { Activity, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
@@ -14,38 +15,47 @@ interface GridIntensityCardProps {
   className?: string;
 }
 
+function priceTone(price: number): "green" | "amber" | "red" {
+  if (price > 0.3) return "red";
+  if (price > 0.18) return "amber";
+  return "green";
+}
+
 export default function GridIntensityCard({
   signal,
   className,
 }: GridIntensityCardProps) {
-  const { carbonProxyGramsPerKwh: carbon, priceEurPerKwh: price, mode } = signal;
+  const { priceEurPerKwh: price, nextPriceEurPerKwh: nextPrice, mode } = signal;
 
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Activity className="size-5" />
-          Grid signal — right now
+        <CardTitle className="flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2">
+            <Activity className="size-5" />
+            Grid signal — right now
+          </span>
+          <LiveClock className="text-muted-foreground text-sm font-medium tabular-nums" />
         </CardTitle>
         <CardDescription>
           {signal.isFallback
             ? "Showing demo data — no live grid signal available."
-            : "Live wholesale price and proxy carbon intensity. Tells the fleet whether to charge, hold, or feed back."}
+            : "Live wholesale price. Tells the fleet whether to charge, hold, or feed back."}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5 pb-4">
         <div className="grid grid-cols-2 gap-3">
           <Gauge
-            label="Carbon"
-            value={`${carbon}`}
-            unit="gCO₂/kWh (proxy)"
-            tone={carbon > 350 ? "red" : carbon > 250 ? "amber" : "green"}
-          />
-          <Gauge
-            label="Price"
+            label="Price now"
             value={price.toFixed(3)}
             unit="€/kWh"
-            tone={price > 0.3 ? "red" : price > 0.18 ? "amber" : "green"}
+            tone={priceTone(price)}
+          />
+          <Gauge
+            label="Next hour"
+            value={nextPrice === null ? "—" : nextPrice.toFixed(3)}
+            unit={nextPrice === null ? "not yet published" : "€/kWh"}
+            tone={nextPrice === null ? "neutral" : priceTone(nextPrice)}
           />
         </div>
         <ModeBanner mode={mode} />
@@ -63,7 +73,7 @@ function Gauge({
   label: string;
   value: string;
   unit: string;
-  tone: "green" | "amber" | "red";
+  tone: "green" | "amber" | "red" | "neutral";
 }) {
   return (
     <div className="rounded-lg border p-3">
@@ -76,6 +86,7 @@ function Gauge({
           tone === "green" && "text-grid-green",
           tone === "amber" && "text-grid-amber",
           tone === "red" && "text-grid-red",
+          tone === "neutral" && "text-muted-foreground",
         )}
       >
         {value}
