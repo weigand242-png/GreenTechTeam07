@@ -3,11 +3,18 @@ import HeaderBox from "@/components/features/dashboard/HeaderBox";
 import PotentialV2GCard from "@/components/features/dashboard/PotentialV2GCard";
 import PriceLoadWeatherChart from "@/components/features/dashboard/PriceLoadWeatherChart";
 import { getFleetSnapshot } from "@/lib/sessions";
+import { currentHourSignal } from "@/lib/signal/current_hour";
 import { getActiveProvider } from "@/lib/timeseries";
+
+// new Date() drives the current-hour signal; render on every request so the
+// signal tracks real time. External fetches still cache via next.revalidate.
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const snap = getFleetSnapshot();
   const window = await getActiveProvider().getWindow();
+  const signal = currentHourSignal(window.points, new Date());
+  const isFallback = window.providerId === "live-fallback";
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 md:px-8 md:py-10">
@@ -15,13 +22,18 @@ export default async function DashboardPage() {
         title="V2G Fleet Dashboard"
         subtitle="Turning idle company cars into grid-balancing batteries."
       />
+      {isFallback && (
+        <p className="text-muted-foreground -mt-2 text-xs">
+          Live grid feed unavailable — showing static demo data.
+        </p>
+      )}
       <div className="grid gap-4 lg:grid-cols-3">
         <PotentialV2GCard
           className="lg:col-span-2"
           capacityKwh={snap.potentialV2GCapacityKwh}
           revenueEur={snap.potentialV2GRevenueEur}
         />
-        <GridIntensityCard />
+        <GridIntensityCard signal={signal} />
       </div>
       <PriceLoadWeatherChart
         points={window.points}

@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Card,
   CardContent,
@@ -7,57 +5,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import type { CurrentHourSignal, SignalMode } from "@/lib/signal/current_hour";
 import { cn } from "@/lib/utils";
 import { Activity, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
-import { useEffect, useState } from "react";
 
-type Mode = "discharge" | "hold" | "charge";
-
-interface GridState {
-  carbonGramsPerKwh: number;
-  priceEurPerKwh: number;
-  mode: Mode;
+interface GridIntensityCardProps {
+  signal: CurrentHourSignal;
+  className?: string;
 }
 
-const INITIAL_STATE: GridState = {
-  carbonGramsPerKwh: 280,
-  priceEurPerKwh: 0.22,
-  mode: "hold",
-};
-
-function classify(carbon: number, price: number): Mode {
-  if (price >= 0.3 && carbon >= 350) return "discharge";
-  if (price <= 0.12 && carbon <= 180) return "charge";
-  return "hold";
-}
-
-function sampleGrid(seed: number): GridState {
-  const now = new Date();
-  const hour = now.getHours() + now.getMinutes() / 60;
-  const peak = Math.sin(((hour - 6) / 24) * Math.PI * 2);
-  const carbon = Math.round(280 + peak * 120 + (seed % 30) - 15);
-  const price = Number(
-    (0.22 + peak * 0.12 + ((seed * 13) % 40 - 20) / 1000).toFixed(3),
-  );
-  return {
-    carbonGramsPerKwh: Math.max(80, carbon),
-    priceEurPerKwh: Math.max(0.05, price),
-    mode: classify(carbon, price),
-  };
-}
-
-export default function GridIntensityCard({ className }: { className?: string }) {
-  const [state, setState] = useState<GridState>(INITIAL_STATE);
-
-  useEffect(() => {
-    let seed = 0;
-    const update = () => setState(sampleGrid(seed++));
-    update();
-    const id = setInterval(update, 4000);
-    return () => clearInterval(id);
-  }, []);
-
-  const { carbonGramsPerKwh: carbon, priceEurPerKwh: price, mode } = state;
+export default function GridIntensityCard({
+  signal,
+  className,
+}: GridIntensityCardProps) {
+  const { carbonProxyGramsPerKwh: carbon, priceEurPerKwh: price, mode } = signal;
 
   return (
     <Card className={className}>
@@ -67,8 +28,9 @@ export default function GridIntensityCard({ className }: { className?: string })
           Grid signal — right now
         </CardTitle>
         <CardDescription>
-          Live carbon intensity and wholesale price. Tells the fleet whether to
-          charge, hold, or feed back.
+          {signal.isFallback
+            ? "Showing demo data — no live grid signal available."
+            : "Live wholesale price and proxy carbon intensity. Tells the fleet whether to charge, hold, or feed back."}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5 pb-4">
@@ -76,14 +38,14 @@ export default function GridIntensityCard({ className }: { className?: string })
           <Gauge
             label="Carbon"
             value={`${carbon}`}
-            unit="gCO₂/kWh"
+            unit="gCO₂/kWh (proxy)"
             tone={carbon > 350 ? "red" : carbon > 250 ? "amber" : "green"}
           />
           <Gauge
             label="Price"
             value={price.toFixed(3)}
             unit="€/kWh"
-            tone={price > 0.30 ? "red" : price > 0.18 ? "amber" : "green"}
+            tone={price > 0.3 ? "red" : price > 0.18 ? "amber" : "green"}
           />
         </div>
         <ModeBanner mode={mode} />
@@ -123,7 +85,7 @@ function Gauge({
   );
 }
 
-function ModeBanner({ mode }: { mode: Mode }) {
+function ModeBanner({ mode }: { mode: SignalMode }) {
   const meta = {
     discharge: {
       icon: ArrowUpFromLine,
