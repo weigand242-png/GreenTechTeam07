@@ -101,3 +101,6 @@ Consider two V2G modes:
 ## Things about to come onto the website:
 - tool for submitting fleet behaviour data
 - consideration of temperature effects on charging efficiency, charging speed, and battery degradation
+
+## Extra
+We have added an appendix folder to our GitHub repository. Inside, you will find an additional pitch presentation for better understanding, as well as an HTML file containing a further web prototype for our schedule planner in the fleet manager.
