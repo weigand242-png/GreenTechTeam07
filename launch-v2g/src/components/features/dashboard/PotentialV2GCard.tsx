@@ -154,7 +154,7 @@ export default function PotentialV2GCard({
             </p>
             <div className="flex items-baseline gap-2">
               <AnimatedCounter
-                className="text-v2g-discharge text-3xl font-semibold"
+                className="text-grid-amber text-3xl font-semibold"
                 end={revenueEur}
                 duration={0.4}
                 separator="."

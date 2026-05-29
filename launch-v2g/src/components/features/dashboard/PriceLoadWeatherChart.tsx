@@ -7,6 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import type { HourMode } from "@/lib/signal/forward_modes";
+import type { SignalMode } from "@/lib/signal/current_hour";
 import type { HourlyPoint } from "@/lib/timeseries";
 import {
   CategoryScale,
@@ -44,8 +46,30 @@ const COLOR_LOAD = "#3b82f6";
 const COLOR_SOLAR = "#f59e0b";
 const COLOR_NOW = "#0ea5e9";
 
+// Suggestion colors mirror LiveSignalCard's ModeBanner: discharge/selling is the
+// "good" green state, charging/buying is red, hold is amber.
+const MODE_COLOR: Record<SignalMode, string> = {
+  discharge: "#16a34a",
+  hold: "#d97706",
+  charge: "#dc2626",
+};
+
+// Stepped-line level per mode: discharge on top, charge at the bottom.
+const MODE_Y: Record<SignalMode, number> = {
+  discharge: 2,
+  hold: 1,
+  charge: 0,
+};
+
+const MODE_LABEL: Record<number, string> = {
+  0: "Charge",
+  1: "Hold",
+  2: "Discharge",
+};
+
 interface Props {
   points: HourlyPoint[];
+  modes: HourMode[];
   providerId: string;
   className?: string;
 }
@@ -87,6 +111,7 @@ const nowLinePlugin: Plugin<"line", NowPluginOptions> = {
 
 export default function PriceLoadWeatherChart({
   points,
+  modes,
   providerId,
   className,
 }: Props) {
@@ -129,9 +154,29 @@ export default function PriceLoadWeatherChart({
           spanGaps: true,
           borderDash: [4, 4],
         },
+        {
+          label: "Suggested action",
+          data: modes.map((m) => ({ x: m.tsMs, y: MODE_Y[m.mode] })),
+          borderColor: MODE_COLOR.hold,
+          backgroundColor: MODE_COLOR.hold,
+          yAxisID: "yMode",
+          stepped: "after",
+          tension: 0,
+          pointRadius: 0,
+          borderWidth: 2,
+          // Color each hour-segment by its own mode; dash forecast hours.
+          segment: {
+            borderColor: (ctx) => {
+              const m = modes[ctx.p0DataIndex];
+              return m ? MODE_COLOR[m.mode] : MODE_COLOR.hold;
+            },
+            borderDash: (ctx) =>
+              modes[ctx.p0DataIndex]?.isForecast ? [4, 4] : undefined,
+          },
+        },
       ],
     }),
-    [points],
+    [points, modes],
   );
 
   const options = useMemo<ChartOptions<"line">>(
@@ -186,6 +231,18 @@ export default function PriceLoadWeatherChart({
           display: false,
           min: 0,
         },
+        yMode: {
+          type: "linear",
+          position: "right",
+          min: -0.2,
+          max: 2.2,
+          grid: { drawOnChartArea: false },
+          ticks: {
+            stepSize: 1,
+            callback: (value) =>
+              MODE_LABEL[typeof value === "number" ? value : Number(value)] ?? "",
+          },
+        },
       },
     }),
     [nowMs],
@@ -200,7 +257,9 @@ export default function PriceLoadWeatherChart({
         </CardTitle>
         <CardDescription>
           Day-ahead price, grid load, and expected solar radiation across the planning
-          window. Source: <code>{providerId}</code>.
+          window. The stepped <em>Suggested action</em> line is an indicative
+          price-quantile signal — top quartile → discharge, bottom quartile → charge.
+          Source: <code>{providerId}</code>.
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-4">

@@ -4,6 +4,7 @@ import PotentialV2GCard from "@/components/features/dashboard/PotentialV2GCard";
 import PriceLoadWeatherChart from "@/components/features/dashboard/PriceLoadWeatherChart";
 import { getFleetSnapshot } from "@/lib/sessions";
 import { currentHourSignal } from "@/lib/signal/current_hour";
+import { forwardModes } from "@/lib/signal/forward_modes";
 import { forwardWindows } from "@/lib/signal/forward_windows";
 import { getActiveProvider } from "@/lib/timeseries";
 
@@ -17,6 +18,7 @@ export default async function DashboardPage() {
   const now = new Date();
   const signal = currentHourSignal(window.points, now);
   const windows = forwardWindows(window.points, now);
+  const modes = forwardModes(window.points);
   const isFallback = window.providerId === "live-fallback";
 
   return (
@@ -43,6 +45,7 @@ export default async function DashboardPage() {
       </div>
       <PriceLoadWeatherChart
         points={window.points}
+        modes={modes}
         providerId={window.providerId}
       />
     </div>
