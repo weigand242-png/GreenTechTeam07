@@ -99,6 +99,6 @@ Consider two V2G modes:
 ##  Our Prototype Website
 - can be found in "launch-v2g" folder, needs to be hosted locally
 
-## Thinks about to come onto the website:
+## Things about to come onto the website:
 - tool for submitting fleet behaviour data
 - consideration of temperature effects on charging efficiency, charging speed, and battery degradation
