@@ -27,7 +27,7 @@ Grid operator:
 - access to cheaper energy compared to fossil-fuel-based generation during periods of high demand and low renewable supply -> *finacial gain*
 - renewable energy integration -> power supply with reduced fossil fuel dependence-> *environmental friendliness*
 - local energy supply -> *lower transmission losses and reduced network costs*
-- - in case of local shortages the EV fleets store enough energy as a backup support for critical infrastructure -> *power security*
+- in case of local shortages the EV fleets store enough energy as a backup support for critical infrastructure -> *power security*
 
 
 ## Things we considered and Guide lines:
