@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useFleetSize } from "@/components/features/fleet/useFleetSize";
+import AnimatedCounter from "@/components/shared/atoms/AnimatedCounter";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -8,11 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import AnimatedCounter from "@/components/shared/atoms/AnimatedCounter";
-import { useFleetSize } from "@/components/features/fleet/useFleetSize";
+import { fmtCount, fmtPrice } from "@/lib/format";
 import { Zap } from "lucide-react";
+import { useState } from "react";
 
 interface Props {
   /** Average nameplate battery capacity per vehicle, in kWh. */
@@ -47,7 +48,7 @@ export default function PotentialV2GCard({
         </CardTitle>
         <CardDescription>
           Total fleet storage, valued at the live grid price. Drag the slider to
-          choose how much is fed back to the grid.
+          choose how much to feed back to the grid.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6 pb-4">
@@ -73,7 +74,7 @@ export default function PotentialV2GCard({
             </p>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-semibold tabular-nums md:text-5xl">
-                {priceEurPerKwh.toFixed(3)}
+                {fmtPrice(priceEurPerKwh)}
               </span>
               <span className="text-muted-foreground text-lg">€/kWh</span>
             </div>
@@ -86,7 +87,7 @@ export default function PotentialV2GCard({
               Sold back to grid
             </p>
             <span className="text-sm font-semibold tabular-nums">
-              {sellPct}% · {Math.round(soldKwh).toLocaleString("de-DE")} kWh
+              {sellPct}% · {fmtCount(Math.round(soldKwh))} kWh
             </span>
           </div>
           <Slider
@@ -101,7 +102,7 @@ export default function PotentialV2GCard({
 
         <div className="flex flex-col gap-1">
           <p className="text-muted-foreground text-xs uppercase tracking-wide">
-            Revenue at {priceEurPerKwh.toFixed(3)} €/kWh
+            Revenue at {fmtPrice(priceEurPerKwh)} €/kWh
           </p>
           <div className="flex items-baseline gap-2">
             <AnimatedCounter

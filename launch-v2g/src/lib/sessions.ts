@@ -30,13 +30,8 @@ export interface FleetSnapshot {
   vehiclesBySegment: Record<VehicleSegment, number>;
   sessionsByLocation: Record<LocationType, number>;
   totalBatteryCapacityKwh: number;
-  potentialV2GCapacityKwh: number;
-  potentialV2GRevenueEur: number;
   recentSessions: Session[];
 }
-
-const POTENTIAL_DISCHARGE_FRACTION = 0.3;
-const V2G_TARIFF_EUR_PER_KWH = 0.18;
 
 let cached: FleetSnapshot | null = null;
 
@@ -113,9 +108,6 @@ export function getFleetSnapshot(): FleetSnapshot {
   );
   const averageBatteryKwh = totalBatteryCapacityKwh / Math.max(totalVehicles, 1);
 
-  const potentialV2GCapacityKwh = totalKwh * POTENTIAL_DISCHARGE_FRACTION;
-  const potentialV2GRevenueEur = potentialV2GCapacityKwh * V2G_TARIFF_EUR_PER_KWH;
-
   const recentSessions = [...sessions]
     .sort((a, b) => b.start.getTime() - a.start.getTime())
     .slice(0, 8);
@@ -130,8 +122,6 @@ export function getFleetSnapshot(): FleetSnapshot {
     vehiclesBySegment,
     sessionsByLocation,
     totalBatteryCapacityKwh,
-    potentialV2GCapacityKwh,
-    potentialV2GRevenueEur,
     recentSessions,
   };
   return cached;

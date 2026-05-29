@@ -9,17 +9,13 @@ import {
 import type { HourlyPoint, HourlySource, TimeseriesWindow } from "../types";
 import type { TimeseriesProvider } from "./types";
 import { staticJsonProvider } from "./static_json";
+import { HOUR_MS, hourKey } from "@/lib/time";
 
 const PROVIDER_ID = "live";
 const FALLBACK_PROVIDER_ID = "live-fallback";
 
-const HOUR_MS = 3_600_000;
 const WINDOW_PAST_HOURS = 3;
 const WINDOW_FUTURE_HOURS = 24;
-
-function hourKey(iso: string): number {
-  return Math.floor(Date.parse(iso) / HOUR_MS) * HOUR_MS;
-}
 
 function indexByHour(points: SmardPoint[]): Map<number, number | null> {
   const out = new Map<number, number | null>();

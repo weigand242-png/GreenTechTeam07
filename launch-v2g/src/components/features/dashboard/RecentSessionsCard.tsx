@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { fmtEnergy1 } from "@/lib/format";
 import { History } from "lucide-react";
 import type { Session } from "@/lib/sessions";
 
@@ -60,10 +61,10 @@ export default function RecentSessionsCard({ sessions, className }: Props) {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {s.kWhDelivered.toFixed(1)}
+                  {fmtEnergy1(s.kWhDelivered)}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {s.peakKw.toFixed(1)}
+                  {fmtEnergy1(s.peakKw)}
                 </TableCell>
                 <TableCell className="text-muted-foreground pr-4 text-right text-xs">
                   {dateFmt.format(s.start)}

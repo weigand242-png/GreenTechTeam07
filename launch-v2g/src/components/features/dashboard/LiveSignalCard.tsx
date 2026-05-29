@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { fmtPrice } from "@/lib/format";
 import type { CurrentHourSignal, SignalMode } from "@/lib/signal/current_hour";
 import { cn } from "@/lib/utils";
 import {
@@ -56,7 +57,7 @@ export default function LiveSignalCard({
         <CardTitle className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-2">
             <Activity className="size-5" />
-            Grid signal — right now
+            Live grid signal
           </span>
           <LiveClock className="text-muted-foreground text-sm font-medium tabular-nums" />
         </CardTitle>
@@ -71,7 +72,7 @@ export default function LiveSignalCard({
           <div className="rounded-lg border p-3">
             <Gauge
               label="Price now"
-              value={price.toFixed(3)}
+              value={fmtPrice(price)}
               unit="€/kWh"
               tone={priceTone(price)}
             />
@@ -79,7 +80,7 @@ export default function LiveSignalCard({
           <div className="rounded-lg border p-3">
             <Gauge
               label="Price trend"
-              value={nextPrice === null ? "—" : nextPrice.toFixed(3)}
+              value={nextPrice === null ? "—" : fmtPrice(nextPrice)}
               unit={nextPrice === null ? "not yet published" : "€/kWh"}
               tone={nextPrice === null ? "neutral" : priceTone(nextPrice)}
             />
@@ -156,7 +157,7 @@ function TrendBadge({
   const deltaLabel =
     delta === null
       ? null
-      : `${delta >= 0 ? "+" : ""}${delta.toFixed(3)}`;
+      : `${delta >= 0 ? "+" : ""}${fmtPrice(delta)}`;
   return (
     <div
       className="flex items-center justify-center gap-1 px-1"
@@ -177,19 +178,19 @@ function ModeBanner({ mode }: { mode: SignalMode }) {
     discharge: {
       icon: ArrowUpFromLine,
       label: "Feed back to grid",
-      detail: "High price + dirty grid — V2G fleet earns and decarbonises.",
+      detail: "High market price + low grid load -> feed energy back to grid.",
       cls: "border-grid-green/40 bg-grid-green/10 text-grid-green",
     },
     hold: {
       icon: Activity,
       label: "Hold",
-      detail: "Mixed signal — vehicles idle or trickle-charge.",
+      detail: "Mixed signal -> hold charge or trickle-charge.",
       cls: "border-grid-amber/40 bg-grid-amber/10 text-grid-amber",
     },
     charge: {
       icon: ArrowDownToLine,
       label: "Charge from grid",
-      detail: "Cheap, low-carbon energy — top up batteries now.",
+      detail: "Cheap, low-carbon energy + high grid load -> top up batteries now.",
       cls: "border-grid-red/40 bg-grid-red/10 text-grid-red",
     },
   }[mode];

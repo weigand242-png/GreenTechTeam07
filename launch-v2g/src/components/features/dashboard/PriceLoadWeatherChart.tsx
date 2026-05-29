@@ -1,6 +1,14 @@
 "use client";
 
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import type { HourlyPoint } from "@/lib/timeseries";
+import {
   CategoryScale,
   Chart as ChartJS,
   Filler,
@@ -19,14 +27,6 @@ import "chartjs-adapter-date-fns";
 import { LineChart } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Line } from "react-chartjs-2";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import type { HourlyPoint } from "@/lib/timeseries";
 
 ChartJS.register(
   CategoryScale,
@@ -147,10 +147,10 @@ export default function PriceLoadWeatherChart({
               const ts = items[0]?.parsed.x;
               return typeof ts === "number"
                 ? new Date(ts).toLocaleString("de-DE", {
-                    weekday: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+                  weekday: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
                 : "";
             },
           },
@@ -199,7 +199,7 @@ export default function PriceLoadWeatherChart({
           Price, load &amp; solar — next 24h
         </CardTitle>
         <CardDescription>
-          Day-ahead price, grid load, and solar radiation across the planning
+          Day-ahead price, grid load, and expected solar radiation across the planning
           window. Source: <code>{providerId}</code>.
         </CardDescription>
       </CardHeader>

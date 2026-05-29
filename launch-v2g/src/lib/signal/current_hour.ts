@@ -1,4 +1,5 @@
 import type { HourlyPoint } from "@/lib/timeseries";
+import { HOUR_MS, hourKey } from "@/lib/time";
 
 export type SignalMode = "charge" | "hold" | "discharge";
 
@@ -16,17 +17,11 @@ const FALLBACK: CurrentHourSignal = {
   isFallback: true,
 };
 
-const HOUR_MS = 3_600_000;
-
 function quantile(sorted: number[], q: number): number {
   const pos = (sorted.length - 1) * q;
   const lo = Math.floor(pos);
   const hi = Math.ceil(pos);
   return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
-}
-
-function hourKey(iso: string): number {
-  return Math.floor(Date.parse(iso) / HOUR_MS) * HOUR_MS;
 }
 
 export function currentHourSignal(

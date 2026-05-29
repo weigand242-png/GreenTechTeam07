@@ -4,6 +4,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { fmtCount } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Car } from "lucide-react";
 import type { VehicleSegment } from "@/lib/sessions";
@@ -47,11 +48,8 @@ export default function FleetStatusCard({
       </CardHeader>
       <CardContent className="flex flex-col gap-5 pb-4">
         <div className="grid grid-cols-3 gap-3">
-          <Stat label="Vehicles" value={totalVehicles.toLocaleString("de-DE")} />
-          <Stat
-            label="Sessions"
-            value={totalSessions.toLocaleString("de-DE")}
-          />
+          <Stat label="Vehicles" value={fmtCount(totalVehicles)} />
+          <Stat label="Sessions" value={fmtCount(totalSessions)} />
           <Stat
             label="Avg. battery"
             value={`${averageBatteryKwh.toFixed(0)} kWh`}

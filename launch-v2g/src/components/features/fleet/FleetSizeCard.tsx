@@ -13,6 +13,7 @@ import {
   MIN_FLEET_SIZE,
   useFleetSize,
 } from "@/components/features/fleet/useFleetSize";
+import { fmtCount, fmtMwh } from "@/lib/format";
 import { Sliders } from "lucide-react";
 
 interface Props {
@@ -42,7 +43,7 @@ export default function FleetSizeCard({ averageBatteryKwh, className }: Props) {
       <CardContent className="flex flex-col gap-6 pb-4">
         <div className="flex items-baseline justify-between">
           <span className="text-4xl font-semibold tabular-nums md:text-5xl">
-            {fleetSize.toLocaleString("de-DE")}
+            {fmtCount(fleetSize)}
           </span>
           <span className="text-muted-foreground text-lg">vehicles</span>
         </div>
@@ -56,8 +57,8 @@ export default function FleetSizeCard({ averageBatteryKwh, className }: Props) {
           aria-label="Projected number of vehicles enrolled in the V2G programme"
         />
         <div className="text-muted-foreground flex justify-between text-xs tabular-nums">
-          <span>{MIN_FLEET_SIZE.toLocaleString("de-DE")}</span>
-          <span>{MAX_FLEET_SIZE.toLocaleString("de-DE")}</span>
+          <span>{fmtCount(MIN_FLEET_SIZE)}</span>
+          <span>{fmtCount(MAX_FLEET_SIZE)}</span>
         </div>
 
         <div className="flex flex-col gap-1 border-t pt-4">
@@ -66,15 +67,12 @@ export default function FleetSizeCard({ averageBatteryKwh, className }: Props) {
           </p>
           <div className="flex items-baseline gap-2">
             <span className="text-v2g-charge text-3xl font-semibold tabular-nums">
-              {capacityMwh.toLocaleString("de-DE", {
-                minimumFractionDigits: 1,
-                maximumFractionDigits: 1,
-              })}
+              {fmtMwh(capacityMwh)}
             </span>
             <span className="text-muted-foreground text-lg">MWh</span>
           </div>
           <p className="text-muted-foreground text-xs">
-            {fleetSize.toLocaleString("de-DE")} vehicles ×{" "}
+            {fmtCount(fleetSize)} vehicles ×{" "}
             {averageBatteryKwh.toFixed(0)} kWh avg. battery
           </p>
         </div>
