@@ -11,11 +11,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import AnimatedCounter from "@/components/shared/atoms/AnimatedCounter";
+import { useFleetSize } from "@/components/features/fleet/useFleetSize";
 import { Zap } from "lucide-react";
 
 interface Props {
-  /** Total nameplate battery capacity of the fleet, in kWh. */
-  capacityKwh: number;
+  /** Average nameplate battery capacity per vehicle, in kWh. */
+  averageBatteryKwh: number;
   /** Live wholesale price from the grid signal, in €/kWh. */
   priceEurPerKwh: number;
   className?: string;
@@ -24,12 +25,15 @@ interface Props {
 const DEFAULT_SELL_PCT = 30;
 
 export default function PotentialV2GCard({
-  capacityKwh,
+  averageBatteryKwh,
   priceEurPerKwh,
   className,
 }: Props) {
   const [sellPct, setSellPct] = useState(DEFAULT_SELL_PCT);
+  const { fleetSize } = useFleetSize();
 
+  // Fleet storage capacity scales with the projected fleet size set on /fleet.
+  const capacityKwh = fleetSize * averageBatteryKwh;
   const capacityMwh = capacityKwh / 1000;
   const soldKwh = capacityKwh * (sellPct / 100);
   const revenueEur = soldKwh * priceEurPerKwh;

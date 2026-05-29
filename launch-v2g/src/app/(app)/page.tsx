@@ -29,7 +29,7 @@ export default async function DashboardPage() {
       )}
       <div className="grid gap-4 lg:grid-cols-2">
         <PotentialV2GCard
-          capacityKwh={snap.totalBatteryCapacityKwh}
+          averageBatteryKwh={snap.averageBatteryKwh}
           priceEurPerKwh={signal.priceEurPerKwh}
         />
         <LiveSignalCard signal={signal} />

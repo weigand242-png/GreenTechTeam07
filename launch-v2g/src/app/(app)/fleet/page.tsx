@@ -1,6 +1,7 @@
 import FleetStatusCard from "@/components/features/dashboard/FleetStatusCard";
 import HeaderBox from "@/components/features/dashboard/HeaderBox";
 import RecentSessionsCard from "@/components/features/dashboard/RecentSessionsCard";
+import FleetSizeCard from "@/components/features/fleet/FleetSizeCard";
 import { getFleetSnapshot } from "@/lib/sessions";
 
 export default function FleetPage() {
@@ -12,18 +13,16 @@ export default function FleetPage() {
         title="Fleet"
         subtitle="Vehicles enrolled in the V2G programme."
       />
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2">
         <FleetStatusCard
           totalVehicles={snap.totalVehicles}
           totalSessions={snap.totalSessions}
           averageBatteryKwh={snap.averageBatteryKwh}
           vehiclesBySegment={snap.vehiclesBySegment}
         />
-        <RecentSessionsCard
-          className="lg:col-span-2"
-          sessions={snap.recentSessions}
-        />
+        <FleetSizeCard averageBatteryKwh={snap.averageBatteryKwh} />
       </div>
+      <RecentSessionsCard sessions={snap.recentSessions} />
     </div>
   );
 }
