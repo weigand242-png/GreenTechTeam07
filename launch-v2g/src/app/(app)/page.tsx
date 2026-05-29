@@ -1,5 +1,5 @@
-import GridIntensityCard from "@/components/features/dashboard/GridIntensityCard";
 import HeaderBox from "@/components/features/dashboard/HeaderBox";
+import LiveSignalCard from "@/components/features/dashboard/LiveSignalCard";
 import PotentialV2GCard from "@/components/features/dashboard/PotentialV2GCard";
 import PriceLoadWeatherChart from "@/components/features/dashboard/PriceLoadWeatherChart";
 import { getFleetSnapshot } from "@/lib/sessions";
@@ -27,13 +27,12 @@ export default async function DashboardPage() {
           Live grid feed unavailable — showing static demo data.
         </p>
       )}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2">
         <PotentialV2GCard
-          className="lg:col-span-2"
           capacityKwh={snap.potentialV2GCapacityKwh}
           revenueEur={snap.potentialV2GRevenueEur}
         />
-        <GridIntensityCard signal={signal} />
+        <LiveSignalCard signal={signal} />
       </div>
       <PriceLoadWeatherChart
         points={window.points}

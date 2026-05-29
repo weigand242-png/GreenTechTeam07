@@ -1,3 +1,4 @@
+import LiveClock from "@/components/shared/atoms/LiveClock";
 import {
   Card,
   CardContent,
@@ -5,15 +6,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import LiveClock from "@/components/shared/atoms/LiveClock";
 import type { CurrentHourSignal, SignalMode } from "@/lib/signal/current_hour";
 import { cn } from "@/lib/utils";
-import { Activity, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import {
+  Activity,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  MoveRight,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 
-interface GridIntensityCardProps {
+interface LiveSignalCardProps {
   signal: CurrentHourSignal;
   className?: string;
 }
+
+// €0.005/kWh = €5/MWh — below this the next-hour move isn't a meaningful trend.
+const TREND_EPSILON_EUR_PER_KWH = 0.005;
 
 function priceTone(price: number): "green" | "amber" | "red" {
   if (price > 0.3) return "red";
@@ -21,11 +31,24 @@ function priceTone(price: number): "green" | "amber" | "red" {
   return "green";
 }
 
-export default function GridIntensityCard({
+type TrendDirection = "up" | "down" | "flat";
+
+function trendDirection(
+  current: number,
+  next: number | null,
+): TrendDirection | null {
+  if (next === null) return null;
+  const delta = next - current;
+  if (Math.abs(delta) < TREND_EPSILON_EUR_PER_KWH) return "flat";
+  return delta > 0 ? "up" : "down";
+}
+
+export default function LiveSignalCard({
   signal,
   className,
-}: GridIntensityCardProps) {
+}: LiveSignalCardProps) {
   const { priceEurPerKwh: price, nextPriceEurPerKwh: nextPrice, mode } = signal;
+  const trend = trendDirection(price, nextPrice);
 
   return (
     <Card className={className}>
@@ -44,19 +67,27 @@ export default function GridIntensityCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5 pb-4">
-        <div className="grid grid-cols-2 gap-3">
-          <Gauge
-            label="Price now"
-            value={price.toFixed(3)}
-            unit="€/kWh"
-            tone={priceTone(price)}
-          />
-          <Gauge
-            label="Next hour"
-            value={nextPrice === null ? "—" : nextPrice.toFixed(3)}
-            unit={nextPrice === null ? "not yet published" : "€/kWh"}
-            tone={nextPrice === null ? "neutral" : priceTone(nextPrice)}
-          />
+        <div className="grid grid-cols-2 items-stretch gap-3">
+          <div className="rounded-lg border p-3">
+            <Gauge
+              label="Price now"
+              value={price.toFixed(3)}
+              unit="€/kWh"
+              tone={priceTone(price)}
+            />
+          </div>
+          <div className="rounded-lg border p-3">
+            <Gauge
+              label="Price trend"
+              value={nextPrice === null ? "—" : nextPrice.toFixed(3)}
+              unit={nextPrice === null ? "not yet published" : "€/kWh"}
+              tone={nextPrice === null ? "neutral" : priceTone(nextPrice)}
+            />
+            <TrendBadge
+              direction={trend}
+              delta={nextPrice === null ? null : nextPrice - price}
+            />
+          </div>
         </div>
         <ModeBanner mode={mode} />
       </CardContent>
@@ -76,7 +107,7 @@ function Gauge({
   tone: "green" | "amber" | "red" | "neutral";
 }) {
   return (
-    <div className="rounded-lg border p-3">
+    <>
       <p className="text-muted-foreground text-xs uppercase tracking-wide">
         {label}
       </p>
@@ -92,6 +123,51 @@ function Gauge({
         {value}
       </p>
       <p className="text-muted-foreground text-xs">{unit}</p>
+    </>
+  );
+}
+
+function TrendBadge({
+  direction,
+  delta,
+}: {
+  direction: TrendDirection | null;
+  delta: number | null;
+}) {
+  const meta =
+    direction === "up"
+      ? {
+        Icon: TrendingUp,
+        tone: "text-grid-red",
+        srLabel: "rising",
+      }
+      : direction === "down"
+        ? {
+          Icon: TrendingDown,
+          tone: "text-grid-green",
+          srLabel: "falling",
+        }
+        : {
+          Icon: MoveRight,
+          tone: "text-muted-foreground",
+          srLabel: direction === null ? "no forecast" : "stable",
+        };
+  const Icon = meta.Icon;
+  const deltaLabel =
+    delta === null
+      ? null
+      : `${delta >= 0 ? "+" : ""}${delta.toFixed(3)}`;
+  return (
+    <div
+      className="flex items-center justify-center gap-1 px-1"
+      aria-label={`Next-hour price ${meta.srLabel}`}
+    >
+      <Icon className={cn("size-6", meta.tone)} />
+      {deltaLabel && (
+        <span className={cn("text-lg tabular-nums", meta.tone)}>
+          {deltaLabel}
+        </span>
+      )}
     </div>
   );
 }
