@@ -96,6 +96,7 @@ Consider two V2G modes:
 
 ##  Our Prototype Website
 - can be found in "launch-v2g" folder, needs to be hosted locally
+- additionally there is a prototype showing how the exact suggested charging times would be depicted
 
 ## Things about to come onto the website:
 - tool for submitting fleet behaviour data
