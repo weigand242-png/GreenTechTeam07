@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { fmtCount, fmtPrice } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { Zap } from "lucide-react";
 import { useState } from "react";
 
@@ -20,24 +21,59 @@ interface Props {
   averageBatteryKwh: number;
   /** Live wholesale price from the grid signal, in €/kWh. */
   priceEurPerKwh: number;
+  /** Average expected price across the next 24h, in €/kWh (null if no forecast). */
+  forecastAvgEurPerKwh: number | null;
+  /** Best-case (peak) expected price across the next 24h, in €/kWh. */
+  forecastPeakEurPerKwh: number | null;
+  /** ISO timestamp of the hour at which the next-24h peak price occurs. */
+  forecastPeakHourIso: string | null;
+  /** True if the next-24h window draws on forecast (not published) hours. */
+  forecastHasForecastData: boolean;
   className?: string;
 }
 
 const DEFAULT_SELL_PCT = 30;
 
+type PriceBasis = "now" | "forecast";
+
+/** Local-time hour label, e.g. "20:00" — matches LiveClock / chart axis convention. */
+function fmtHour(iso: string): string {
+  return new Date(iso).toLocaleTimeString("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function PotentialV2GCard({
   averageBatteryKwh,
   priceEurPerKwh,
+  forecastAvgEurPerKwh,
+  forecastPeakEurPerKwh,
+  forecastPeakHourIso,
+  forecastHasForecastData,
   className,
 }: Props) {
   const [sellPct, setSellPct] = useState(DEFAULT_SELL_PCT);
+  const [basis, setBasis] = useState<PriceBasis>("now");
   const { fleetSize } = useFleetSize();
+
+  const hasForecast = forecastAvgEurPerKwh !== null;
+  // Fall back to "now" whenever the forecast window has no usable data.
+  const activeBasis: PriceBasis = hasForecast ? basis : "now";
+
+  const activePrice =
+    activeBasis === "forecast" && forecastAvgEurPerKwh !== null
+      ? forecastAvgEurPerKwh
+      : priceEurPerKwh;
 
   // Fleet storage capacity scales with the projected fleet size set on /fleet.
   const capacityKwh = fleetSize * averageBatteryKwh;
   const capacityMwh = capacityKwh / 1000;
   const soldKwh = capacityKwh * (sellPct / 100);
-  const revenueEur = soldKwh * priceEurPerKwh;
+  const revenueEur = soldKwh * activePrice;
+  const peakRevenueEur =
+    forecastPeakEurPerKwh !== null ? soldKwh * forecastPeakEurPerKwh : null;
+  const showForecast = activeBasis === "forecast";
 
   return (
     <Card className={className}>
@@ -52,6 +88,11 @@ export default function PotentialV2GCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6 pb-4">
+        <BasisToggle
+          basis={activeBasis}
+          onChange={setBasis}
+          forecastEnabled={hasForecast}
+        />
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
             <p className="text-muted-foreground text-xs uppercase tracking-wide">
@@ -70,11 +111,11 @@ export default function PotentialV2GCard({
           </div>
           <div className="flex flex-col gap-1">
             <p className="text-muted-foreground text-xs uppercase tracking-wide">
-              Live grid price
+              {showForecast ? "Avg. 24h price" : "Live grid price"}
             </p>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-semibold tabular-nums md:text-5xl">
-                {fmtPrice(priceEurPerKwh)}
+                {fmtPrice(activePrice)}
               </span>
               <span className="text-muted-foreground text-lg">€/kWh</span>
             </div>
@@ -102,7 +143,8 @@ export default function PotentialV2GCard({
 
         <div className="flex flex-col gap-1">
           <p className="text-muted-foreground text-xs uppercase tracking-wide">
-            Revenue at {fmtPrice(priceEurPerKwh)} €/kWh
+            {showForecast ? "Revenue at avg." : "Revenue at"}{" "}
+            {fmtPrice(activePrice)} €/kWh
           </p>
           <div className="flex items-baseline gap-2">
             <AnimatedCounter
@@ -113,10 +155,63 @@ export default function PotentialV2GCard({
               decimals={0}
               prefix="€ "
             />
-            <Badge variant="secondary">projected</Badge>
+            <Badge variant="secondary">
+              {showForecast && forecastHasForecastData ? "forecast" : "projected"}
+            </Badge>
           </div>
+          {showForecast && peakRevenueEur !== null && (
+            <p className="text-muted-foreground text-xs">
+              Best-case at peak {fmtPrice(forecastPeakEurPerKwh as number)} €/kWh →{" "}
+              <span className="text-foreground font-semibold tabular-nums">
+                € {fmtCount(Math.round(peakRevenueEur))}
+              </span>
+              {forecastPeakHourIso &&
+                `, expected around ~${fmtHour(forecastPeakHourIso)}`}
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function BasisToggle({
+  basis,
+  onChange,
+  forecastEnabled,
+}: {
+  basis: PriceBasis;
+  onChange: (basis: PriceBasis) => void;
+  forecastEnabled: boolean;
+}) {
+  const options: { value: PriceBasis; label: string; disabled?: boolean }[] = [
+    { value: "now", label: "Live now" },
+    { value: "forecast", label: "24h forecast", disabled: !forecastEnabled },
+  ];
+  return (
+    <div
+      role="group"
+      aria-label="Price basis"
+      className="bg-muted inline-flex w-fit rounded-lg p-0.5"
+    >
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          disabled={opt.disabled}
+          aria-pressed={basis === opt.value}
+          onClick={() => onChange(opt.value)}
+          className={cn(
+            "rounded-md px-3 py-1 text-sm font-medium transition-colors",
+            basis === opt.value
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+            opt.disabled && "cursor-not-allowed opacity-50 hover:text-muted-foreground",
+          )}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
   );
 }

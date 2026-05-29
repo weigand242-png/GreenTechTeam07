@@ -4,6 +4,7 @@ import PotentialV2GCard from "@/components/features/dashboard/PotentialV2GCard";
 import PriceLoadWeatherChart from "@/components/features/dashboard/PriceLoadWeatherChart";
 import { getFleetSnapshot } from "@/lib/sessions";
 import { currentHourSignal } from "@/lib/signal/current_hour";
+import { forwardWindows } from "@/lib/signal/forward_windows";
 import { getActiveProvider } from "@/lib/timeseries";
 
 // new Date() drives the current-hour signal; render on every request so the
@@ -13,7 +14,9 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const snap = getFleetSnapshot();
   const window = await getActiveProvider().getWindow();
-  const signal = currentHourSignal(window.points, new Date());
+  const now = new Date();
+  const signal = currentHourSignal(window.points, now);
+  const windows = forwardWindows(window.points, now);
   const isFallback = window.providerId === "live-fallback";
 
   return (
@@ -31,8 +34,12 @@ export default async function DashboardPage() {
         <PotentialV2GCard
           averageBatteryKwh={snap.averageBatteryKwh}
           priceEurPerKwh={signal.priceEurPerKwh}
+          forecastAvgEurPerKwh={windows.next24hAvgEurPerKwh}
+          forecastPeakEurPerKwh={windows.next24hPeakEurPerKwh}
+          forecastPeakHourIso={windows.next24hPeakHourIso}
+          forecastHasForecastData={windows.next24hHasForecast}
         />
-        <LiveSignalCard signal={signal} />
+        <LiveSignalCard signal={signal} windows={windows} />
       </div>
       <PriceLoadWeatherChart
         points={window.points}
