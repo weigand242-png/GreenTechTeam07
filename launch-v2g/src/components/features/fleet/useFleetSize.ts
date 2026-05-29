@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 
 export const MIN_FLEET_SIZE = 250;
-export const MAX_FLEET_SIZE = 5000;
+export const MAX_FLEET_SIZE = 25000;
 export const DEFAULT_FLEET_SIZE = 250;
 
 const STORAGE_KEY = "v2g.fleetSize";
