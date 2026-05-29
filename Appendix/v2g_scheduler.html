@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V2G Fleet · Scheduling Simulation</title>
+<style>
+  /* ============================================================
+     V2G Fleet Design Tokens (mapped from your globals.css)
+     ============================================================ */
+  :root {
+    --background: #ffffff;
+    --foreground: #1a1a1a;
+    --card: #ffffff;
+    --card-foreground: #1a1a1a;
+    --muted: #f7f7f7;
+    --muted-foreground: #737373;
+    --border: #e5e5e5;
+    --input: #e5e5e5;
+    --primary: #1a1a1a;
+    --primary-foreground: #fafafa;
+
+    /* V2G accents — your tokens */
+    --v2g-discharge: #2eb872;   /* fresh green: feeding to grid */
+    --v2g-discharge-bg: #e7f7ee;
+    --v2g-charge: #3b82f6;      /* calm blue: drawing from grid */
+    --v2g-charge-bg: #ebf3fe;
+    --grid-green: #2eb872;
+    --grid-amber: #d4a017;
+    --grid-amber-bg: #fdf5e1;
+    --grid-red: #d63029;
+    --grid-red-bg: #fdebe9;
+
+    --radius: 0.625rem;
+    --radius-sm: 0.375rem;
+    --radius-lg: 0.875rem;
+
+    --shadow-chart: 0 1px 3px 0 rgba(16, 24, 40, 0.1), 0 1px 2px 0 rgba(16, 24, 40, 0.06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    min-height: 100vh;
+  }
+
+  /* ============================================================
+     SIDEBAR (matches your real Sidebar.tsx)
+     ============================================================ */
+  aside.sidebar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 224px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-right: 1px solid var(--border);
+    background: #fafafa;
+    padding: 16px;
+  }
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    margin-bottom: 32px;
+    text-decoration: none;
+    color: var(--foreground);
+  }
+  .sidebar-logo {
+    width: 36px;
+    height: 36px;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    border-radius: var(--radius-sm);
+    display: grid;
+    place-items: center;
+  }
+  .sidebar-brand-name {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    color: var(--muted-foreground);
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.12s;
+  }
+  .sidebar-link:hover {
+    background: var(--muted);
+    color: var(--foreground);
+  }
+  .sidebar-link.active {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+  .sidebar-link svg { width: 18px; height: 18px; }
+
+  /* ============================================================
+     MAIN
+     ============================================================ */
+  main.main {
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .content {
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 40px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* HEADER */
+  .header-box h1 {
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+  .header-box .subtitle {
+    color: var(--muted-foreground);
+    font-size: 14px;
+  }
+
+  /* EMERGENCY BANNER */
+  .emergency-banner {
+    background: var(--grid-red-bg);
+    border: 1px solid var(--grid-red);
+    color: var(--grid-red);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    display: none;
+    align-items: center;
+    gap: 12px;
+  }
+  .emergency-banner.active { display: flex; }
+  .emergency-banner::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: var(--grid-red);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* GRID */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 16px;
+  }
+  .grid-cards-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .grid-cards-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* ============================================================
+     CARD (matches shadcn Card component)
+     ============================================================ */
+  .card {
+    background: var(--card);
+    color: var(--card-foreground);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-chart);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 20px 24px 0;
+  }
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title svg { width: 20px; height: 20px; }
+  .card-description {
+    color: var(--muted-foreground);
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  .card-content {
+    padding: 20px 24px;
+  }
+
+  /* ============================================================
+     CONTROLS PANEL
+     ============================================================ */
+  .controls .card-content {
+    padding: 16px 24px 24px;
+  }
+  .control-group {
+    margin-bottom: 18px;
+  }
+  .control-group:last-child { margin-bottom: 0; }
+  .lbl {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted-foreground);
+    margin-bottom: 8px;
+  }
+  .ctrl-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .slider-val {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--border);
+    outline: none;
+    border-radius: 2px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+  .help {
+    font-size: 11px;
+    color: var(--muted-foreground);
+    margin-top: 6px;
+    line-height: 1.4;
+  }
+
+  .toggle-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .toggle-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--foreground);
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.12s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toggle-btn:hover {
+    background: var(--muted);
+  }
+  .toggle-btn.active {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    border-color: var(--primary);
+  }
+
+  .divider {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+
+  .emergency-btn {
+    width: 100%;
+    background: var(--card);
+    color: var(--grid-red);
+    border: 1px solid var(--grid-red);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .emergency-btn:hover { background: var(--grid-red-bg); }
+  .emergency-btn.active {
+    background: var(--grid-red);
+    color: #fff;
+  }
+  .emergency-btn svg { width: 16px; height: 16px; }
+
+  /* ============================================================
+     KPI CARDS
+     ============================================================ */
+  .kpi-card .card-content {
+    padding: 18px 22px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted-foreground);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .kpi-value {
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .kpi-value.discharge { color: var(--v2g-discharge); }
+  .kpi-value.charge { color: var(--v2g-charge); }
+  .kpi-sub {
+    font-size: 12px;
+    color: var(--muted-foreground);
+    margin-top: 8px;
+  }
+
+  /* BADGE */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 500;
+    background: var(--muted);
+    color: var(--muted-foreground);
+  }
+  .badge.discharge {
+    background: var(--v2g-discharge-bg);
+    color: var(--v2g-discharge);
+  }
+  .badge.charge {
+    background: var(--v2g-charge-bg);
+    color: var(--v2g-charge);
+  }
+  .badge.amber {
+    background: var(--grid-amber-bg);
+    color: var(--grid-amber);
+  }
+  .badge.red {
+    background: var(--grid-red-bg);
+    color: var(--grid-red);
+  }
+
+  /* ============================================================
+     TIMELINE
+     ============================================================ */
+  .hour-grid {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 4px 8px;
+    align-items: center;
+  }
+  .hour-label {
+    font-size: 11px;
+    color: var(--muted-foreground);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    padding-right: 4px;
+  }
+  .hour-bar {
+    height: 26px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 11px;
+    font-weight: 500;
+    overflow: hidden;
+    white-space: nowrap;
+    gap: 8px;
+  }
+  .hour-bar .label { font-weight: 600; flex-shrink: 0; }
+  .hour-bar .reason {
+    font-weight: 400;
+    opacity: 0.85;
+    font-size: 10.5px;
+    margin-left: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hour-bar.mode-charge {
+    background: var(--v2g-charge-bg);
+    color: var(--v2g-charge);
+  }
+  .hour-bar.mode-discharge {
+    background: var(--v2g-discharge-bg);
+    color: var(--v2g-discharge);
+  }
+  .hour-bar.mode-fcr {
+    background: #ebfaf5;
+    color: #0d8a5d;
+  }
+  .hour-bar.mode-drive {
+    background: var(--grid-amber-bg);
+    color: var(--grid-amber);
+  }
+  .hour-bar.mode-idle {
+    background: var(--muted);
+    color: var(--muted-foreground);
+  }
+  .hour-bar.mode-emergency {
+    background: var(--grid-red);
+    color: #fff;
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 18px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted-foreground);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+  }
+
+  /* PRICE CHART */
+  .price-chart {
+    width: 100%;
+    height: 180px;
+    margin-top: 8px;
+  }
+
+  /* LOCAL IMPACT */
+  .local-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 4px;
+  }
+  .local-stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted-foreground);
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .local-stat-value {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--v2g-discharge);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .local-stat-sub {
+    font-size: 11px;
+    color: var(--muted-foreground);
+    margin-top: 6px;
+    line-height: 1.4;
+  }
+
+  /* DECISION LOG */
+  .log-card { max-height: 320px; overflow: hidden; }
+  .log-list {
+    max-height: 260px;
+    overflow-y: auto;
+    margin-top: 4px;
+  }
+  .log-entry {
+    display: grid;
+    grid-template-columns: 60px 110px 1fr;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    align-items: baseline;
+  }
+  .log-entry:last-child { border-bottom: none; }
+  .log-time {
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+  .log-reason {
+    color: var(--foreground);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  /* FOOTER */
+  .sources {
+    font-size: 11px;
+    color: var(--muted-foreground);
+    line-height: 1.6;
+    padding-top: 8px;
+  }
+
+  /* Lucide icon styles */
+  .icon { width: 20px; height: 20px; stroke-width: 2; }
+  .icon-sm { width: 16px; height: 16px; stroke-width: 2; }
+</style>
+</head>
+<body>
+
+<!-- Lucide-compatible inline SVGs -->
+<svg width="0" height="0" style="display:none;">
+  <defs>
+    <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
+    </symbol>
+    <symbol id="i-gauge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>
+    </symbol>
+    <symbol id="i-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.5.5 0 0 1-.96 0L9.24 3.18a.5.5 0 0 0-.96 0l-2.35 8.36A2 2 0 0 1 4 13H2"/>
+    </symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+    </symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19.2 2.96c1.4 6.07.16 13.07-5.2 17.04A7 7 0 0 1 11 20z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/>
+    </symbol>
+    <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+    </symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><path d="M14 9h4l4 4v4c0 .6-.4 1-1 1h-2"/><circle cx="7" cy="18" r="2"/><path d="M15 18H9"/><circle cx="17" cy="18" r="2"/>
+    </symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+    </symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17.5 19a4.5 4.5 0 1 0-1.9-8.59A6 6 0 0 0 4 12.5 5 5 0 0 0 9 19h8.5z"/>
+    </symbol>
+    <symbol id="i-wind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <a href="#" class="sidebar-brand">
+      <span class="sidebar-logo">
+        <svg class="icon" style="color:white"><use href="#i-zap"/></svg>
+      </span>
+      <span class="sidebar-brand-name">V2G Fleet</span>
+    </a>
+    <nav class="sidebar-nav">
+      <a href="#" class="sidebar-link">
+        <svg class="icon-sm"><use href="#i-gauge"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a href="#" class="sidebar-link">
+        <svg class="icon-sm"><use href="#i-truck"/></svg>
+        <span>Fleet</span>
+      </a>
+      <a href="#" class="sidebar-link">
+        <svg class="icon-sm"><use href="#i-activity"/></svg>
+        <span>Grid</span>
+      </a>
+      <a href="#" class="sidebar-link active">
+        <svg class="icon-sm"><use href="#i-clock"/></svg>
+        <span>Simulator</span>
+      </a>
+      <a href="#" class="sidebar-link">
+        <svg class="icon-sm"><use href="#i-settings"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="content">
+
+      <!-- HEADER -->
+      <div class="header-box">
+        <h1>Scheduling Algorithm</h1>
+        <p class="subtitle">Live simulation of how our optimizer decides each hour — for a 100-vehicle logistics fleet in the Rhein-Main region.</p>
+      </div>
+
+      <!-- EMERGENCY BANNER -->
+      <div class="emergency-banner" id="emergencyBanner">
+        <svg class="icon-sm"><use href="#i-alert"/></svg>
+        <span>Emergency mode active — TSO reported frequency deviation. Fleet is discharging at maximum capacity.</span>
+      </div>
+
+      <!-- MAIN GRID -->
+      <div class="grid-2">
+
+        <!-- CONTROLS -->
+        <div class="card controls">
+          <div class="card-header">
+            <div class="card-title">
+              <svg class="icon"><use href="#i-settings"/></svg>
+              Variables
+            </div>
+            <div class="card-description">Adjust scenario · algorithm reacts live</div>
+          </div>
+          <div class="card-content">
+
+            <div class="control-group">
+              <label class="lbl">Weather</label>
+              <div class="toggle-row">
+                <button class="toggle-btn active" data-weather="sunny" onclick="setWeather('sunny')">
+                  <svg class="icon-sm"><use href="#i-sun"/></svg> Sunny — high solar
+                </button>
+                <button class="toggle-btn" data-weather="cloudy" onclick="setWeather('cloudy')">
+                  <svg class="icon-sm"><use href="#i-cloud"/></svg> Cloudy — low solar
+                </button>
+                <button class="toggle-btn" data-weather="storm" onclick="setWeather('storm')">
+                  <svg class="icon-sm"><use href="#i-wind"/></svg> Storm — high wind
+                </button>
+              </div>
+              <div class="help">Weather drives renewable supply and therefore the price curve.</div>
+            </div>
+
+            <div class="control-group">
+              <div class="ctrl-row">
+                <label class="lbl">Unplanned trips</label>
+                <span class="slider-val"><span id="unplannedVal">2</span> cars</span>
+              </div>
+              <input type="range" id="unplannedSlider" min="0" max="20" step="1" value="2" oninput="setUnplanned(this.value)">
+              <div class="help">Cars unexpectedly pulled out of the V2G pool.</div>
+            </div>
+
+            <div class="control-group">
+              <div class="ctrl-row">
+                <label class="lbl">SoC buffer</label>
+                <span class="slider-val"><span id="socVal">30</span> %</span>
+              </div>
+              <input type="range" id="socSlider" min="10" max="60" step="5" value="30" oninput="setSoc(this.value)">
+              <div class="help">Guaranteed minimum charge before any tour.</div>
+            </div>
+
+            <div class="divider">
+              <label class="lbl">Emergency scenario</label>
+              <button class="emergency-btn" id="emergencyBtn" onclick="toggleEmergency()">
+                <svg class="icon-sm"><use href="#i-alert"/></svg>
+                <span id="emergencyBtnLabel">Trigger frequency emergency</span>
+              </button>
+              <div class="help">
+                Simulates a sudden grid frequency deviation. The algorithm instantly switches the entire available fleet to maximum discharge — our emergency aggregator function.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- RESULTS -->
+        <div style="display:flex; flex-direction:column; gap:16px;">
+
+          <!-- KPI ROW -->
+          <div class="grid-cards-4">
+            <div class="card kpi-card">
+              <div class="card-content">
+                <div class="kpi-label">Available cars</div>
+                <div class="kpi-value" id="kpiAvailable">98</div>
+                <div class="kpi-sub" id="kpiAvailableSub">100 fleet</div>
+              </div>
+            </div>
+            <div class="card kpi-card">
+              <div class="card-content">
+                <div class="kpi-label">Daily revenue</div>
+                <div class="kpi-value discharge" id="kpiRevenue">€ 312</div>
+                <div class="kpi-sub">Arbitrage + FCR + bonus</div>
+              </div>
+            </div>
+            <div class="card kpi-card">
+              <div class="card-content">
+                <div class="kpi-label">Negative-price bonus</div>
+                <div class="kpi-value charge" id="kpiNegBonus">€ 41</div>
+                <div class="kpi-sub" id="kpiNegSub">Hours paid to charge</div>
+              </div>
+            </div>
+            <div class="card kpi-card">
+              <div class="card-content">
+                <div class="kpi-label">Net per car · today</div>
+                <div class="kpi-value" id="kpiPerCar">€ 3.53</div>
+                <div class="kpi-sub">After degradation</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 24h TIMELINE -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg class="icon"><use href="#i-clock"/></svg>
+                24-hour schedule
+              </div>
+              <div class="card-description">Each row = 1 hour · color shows the action selected by the algorithm</div>
+            </div>
+            <div class="card-content">
+              <div class="hour-grid" id="hourGrid"></div>
+              <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--v2g-charge)"></div>Charge</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#0d8a5d"></div>FCR standby</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--v2g-discharge)"></div>Discharge</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--grid-amber)"></div>Tour / driving</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#a3a3a3"></div>Idle</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--grid-red)"></div>Emergency discharge</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PRICE + LOCAL IMPACT -->
+          <div class="grid-cards-2">
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg class="icon"><use href="#i-activity"/></svg>
+                  Electricity price
+                </div>
+                <div class="card-description">Day-Ahead spot, simulated by weather scenario</div>
+              </div>
+              <div class="card-content">
+                <svg class="price-chart" id="priceChart" viewBox="0 0 400 180" preserveAspectRatio="none"></svg>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg class="icon" style="color:var(--v2g-discharge)"><use href="#i-leaf"/></svg>
+                  Local grid contribution
+                </div>
+                <div class="card-description">Rhein-Main region · today</div>
+              </div>
+              <div class="card-content">
+                <div class="local-grid">
+                  <div>
+                    <div class="local-stat-label">Network load avoided</div>
+                    <div class="local-stat-value" id="netReduce">340 kW</div>
+                    <div class="local-stat-sub">Solar absorbed locally instead of routed through</div>
+                  </div>
+                  <div>
+                    <div class="local-stat-label">CO₂ displaced</div>
+                    <div class="local-stat-value" id="co2Saved">87 kg</div>
+                    <div class="local-stat-sub">Gas peakers replaced by stored solar</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- DECISION LOG -->
+          <div class="card log-card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg class="icon"><use href="#i-list"/></svg>
+                Decision log
+              </div>
+              <div class="card-description">Algorithm reasoning for each hour of the day</div>
+            </div>
+            <div class="card-content">
+              <div class="log-list" id="logEntries"></div>
+            </div>
+          </div>
+
+          <div class="sources">
+            Market basis: SMARD/EPEX Day-Ahead 2025 · FCR prices regelleistung-online.de ·
+            Simulation: 100-vehicle logistics fleet, Rhein-Main · AC bidirectional 11 kW · 75 kWh battery avg
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+// =====================================================================
+// STATE
+// =====================================================================
+let state = {
+  weather: 'sunny',
+  unplanned: 2,
+  soc: 30,
+  emergency: false,
+};
+
+// 24h fleet schedule — typical logistics flow (cars parked at depot per hour)
+const fleetPlan = [
+  { h: 0, parked: 95 },  { h: 1, parked: 96 },  { h: 2, parked: 96 },  { h: 3, parked: 96 },
+  { h: 4, parked: 95 },  { h: 5, parked: 90 },  { h: 6, parked: 70 },  { h: 7, parked: 30 },
+  { h: 8, parked: 15 },  { h: 9, parked: 10 },  { h: 10, parked: 12 }, { h: 11, parked: 18 },
+  { h: 12, parked: 25 }, { h: 13, parked: 20 }, { h: 14, parked: 18 }, { h: 15, parked: 22 },
+  { h: 16, parked: 35 }, { h: 17, parked: 55 }, { h: 18, parked: 75 }, { h: 19, parked: 85 },
+  { h: 20, parked: 90 }, { h: 21, parked: 93 }, { h: 22, parked: 94 }, { h: 23, parked: 95 },
+];
+
+// Price profiles (€/MWh, simulated based on SMARD 2025 patterns)
+const priceProfiles = {
+  sunny:  [85, 82, 80, 78, 76, 75, 80, 92, 105, 95, 60, 10, -15, -20, 5, 45, 88, 135, 165, 155, 130, 110, 95, 88],
+  cloudy: [105, 102, 98, 96, 94, 95, 110, 130, 145, 140, 135, 130, 128, 125, 130, 138, 150, 175, 195, 185, 165, 145, 125, 115],
+  storm:  [70, 65, 55, 50, 45, 40, 50, 65, 80, 75, 60, 45, 35, 25, 20, 35, 55, 95, 125, 115, 95, 80, 75, 72],
+};
+
+// =====================================================================
+// HANDLERS
+// =====================================================================
+function setWeather(w) {
+  state.weather = w;
+  document.querySelectorAll('[data-weather]').forEach(b => {
+    b.classList.toggle('active', b.dataset.weather === w);
+  });
+  render();
+}
+function setUnplanned(v) {
+  state.unplanned = parseInt(v);
+  document.getElementById('unplannedVal').textContent = v;
+  render();
+}
+function setSoc(v) {
+  state.soc = parseInt(v);
+  document.getElementById('socVal').textContent = v;
+  render();
+}
+function toggleEmergency() {
+  state.emergency = !state.emergency;
+  const btn = document.getElementById('emergencyBtn');
+  const banner = document.getElementById('emergencyBanner');
+  const label = document.getElementById('emergencyBtnLabel');
+  btn.classList.toggle('active', state.emergency);
+  banner.classList.toggle('active', state.emergency);
+  label.textContent = state.emergency ? 'End emergency' : 'Trigger frequency emergency';
+  render();
+}
+
+// =====================================================================
+// SCHEDULING ALGORITHM — the core logic
+// =====================================================================
+function decideHour(hour, prices, parked, weather, socBuffer, unplanned, emergency) {
+  const price = prices[hour];
+  const avgPrice = prices.reduce((a,b) => a+b, 0) / 24;
+  const effectiveParked = Math.max(0, parked - (hour >= 6 && hour <= 20 ? unplanned : 0));
+
+  // Emergency has absolute priority
+  if (emergency && effectiveParked > 30) {
+    return { mode: 'emergency', reason: 'TSO frequency deviation → max discharge', cars: effectiveParked };
+  }
+
+  // Very few parked = tour hours
+  if (parked < 25) {
+    return { mode: 'drive', reason: 'Tours active — fleet operation priority', cars: 100 - parked };
+  }
+
+  // Negative or very low prices → charge
+  if (price < 20) {
+    const reason = price < 0
+      ? `Negative price ${price} €/MWh — we are paid to charge`
+      : `Lowest price ${price} €/MWh — optimal charging window`;
+    return { mode: 'charge', reason, cars: effectiveParked };
+  }
+
+  // High prices (evening peak) → discharge
+  if (price > avgPrice * 1.4) {
+    return { mode: 'discharge', reason: `Peak price ${price} €/MWh → discharge`, cars: Math.floor(effectiveParked * 0.7) };
+  }
+
+  // Moderate prices + many parked → FCR standby
+  if (effectiveParked > 40) {
+    return { mode: 'fcr', reason: `${effectiveParked} cars available → FCR pool (~${(effectiveParked * 0.011).toFixed(1)} MW)`, cars: effectiveParked };
+  }
+
+  return { mode: 'idle', reason: 'Idle — no market opportunity', cars: effectiveParked };
+}
+
+// =====================================================================
+// RENDER
+// =====================================================================
+function render() {
+  const prices = priceProfiles[state.weather];
+  const decisions = fleetPlan.map(p =>
+    decideHour(p.h, prices, p.parked, state.weather, state.soc, state.unplanned, state.emergency)
+  );
+
+  renderTimeline(decisions, prices);
+  renderPriceChart(prices);
+  renderKPIs(decisions, prices);
+  renderLog(decisions, prices);
+  renderLocalImpact(decisions, prices);
+}
+
+function renderTimeline(decisions, prices) {
+  const grid = document.getElementById('hourGrid');
+  grid.innerHTML = '';
+  decisions.forEach((d, h) => {
+    const label = document.createElement('div');
+    label.className = 'hour-label';
+    label.textContent = `${h.toString().padStart(2,'0')}:00`;
+    grid.appendChild(label);
+
+    const bar = document.createElement('div');
+    bar.className = `hour-bar mode-${d.mode}`;
+    const modeLabel = {
+      charge: 'CHARGE',
+      discharge: 'DISCHARGE',
+      fcr: 'FCR STANDBY',
+      drive: 'TOUR',
+      idle: 'IDLE',
+      emergency: 'EMERGENCY',
+    }[d.mode];
+    bar.innerHTML = `
+      <span class="label">${modeLabel}</span>
+      <span>${d.cars} cars</span>
+      <span class="reason">${prices[h]} €/MWh</span>
+    `;
+    grid.appendChild(bar);
+  });
+}
+
+function renderPriceChart(prices) {
+  const svg = document.getElementById('priceChart');
+  const w = 400, hgt = 180;
+  const padding = { l: 36, r: 12, t: 16, b: 26 };
+  const innerW = w - padding.l - padding.r;
+  const innerH = hgt - padding.t - padding.b;
+  const minP = Math.min(...prices, -30);
+  const maxP = Math.max(...prices, 200);
+  const range = maxP - minP || 1;
+
+  const xFor = i => padding.l + (i / 23) * innerW;
+  const yFor = p => padding.t + (1 - (p - minP) / range) * innerH;
+
+  let parts = [];
+
+  // Zero line (important for negative prices)
+  if (minP < 0) {
+    const zeroY = yFor(0);
+    parts.push(`<line x1="${padding.l}" y1="${zeroY}" x2="${w - padding.r}" y2="${zeroY}" stroke="#d4a017" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>`);
+    parts.push(`<text x="${padding.l - 6}" y="${zeroY + 3}" text-anchor="end" font-size="10" fill="#d4a017" font-weight="500">0 €</text>`);
+  }
+
+  // Axis labels
+  parts.push(`<text x="${padding.l - 6}" y="${yFor(maxP) + 4}" text-anchor="end" font-size="10" fill="#737373">${maxP} €</text>`);
+  parts.push(`<text x="${padding.l - 6}" y="${yFor(minP) + 4}" text-anchor="end" font-size="10" fill="#737373">${minP} €</text>`);
+
+  // Hour labels
+  [0, 6, 12, 18, 23].forEach(h => {
+    parts.push(`<text x="${xFor(h)}" y="${hgt - 8}" text-anchor="middle" font-size="10" fill="#737373">${h}h</text>`);
+  });
+
+  // Filled area below line (subtle)
+  let areaPath = `M ${xFor(0)},${yFor(prices[0])} `;
+  prices.forEach((p, i) => { if (i > 0) areaPath += `L ${xFor(i)},${yFor(p)} `; });
+  areaPath += `L ${xFor(23)},${yFor(minP)} L ${xFor(0)},${yFor(minP)} Z`;
+  parts.push(`<path d="${areaPath}" fill="#2eb872" opacity="0.08"/>`);
+
+  // Price line
+  let linePath = `M ${xFor(0)},${yFor(prices[0])} `;
+  prices.forEach((p, i) => { if (i > 0) linePath += `L ${xFor(i)},${yFor(p)} `; });
+  parts.push(`<path d="${linePath}" stroke="#2eb872" stroke-width="2" fill="none"/>`);
+
+  // Points (negative prices highlighted)
+  prices.forEach((p, i) => {
+    const isNeg = p < 0;
+    const color = isNeg ? '#d4a017' : '#2eb872';
+    const r = isNeg ? 3.5 : 1.8;
+    parts.push(`<circle cx="${xFor(i)}" cy="${yFor(p)}" r="${r}" fill="${color}"/>`);
+  });
+
+  svg.innerHTML = parts.join('');
+}
+
+function renderKPIs(decisions, prices) {
+  const peakHour = 19;
+  const available = decisions[peakHour].mode === 'drive' ? 0 : decisions[peakHour].cars;
+  document.getElementById('kpiAvailable').textContent = available;
+  const subParts = ['100 fleet'];
+  if (state.unplanned > 0) subParts.push(`− ${state.unplanned} unplanned`);
+  if (state.emergency) subParts.push('+ emergency');
+  document.getElementById('kpiAvailableSub').textContent = subParts.join(' ');
+
+  let arbitrage = 0, negativeBonus = 0, negHours = 0, fcrRevenue = 0, emergencyBonus = 0;
+
+  decisions.forEach((d, h) => {
+    const p = prices[h];
+    const energyMWh = d.cars * 11 / 1000;
+    if (d.mode === 'charge' && p < 0) {
+      negativeBonus += Math.abs(p) * energyMWh;
+      negHours++;
+    }
+    if (d.mode === 'discharge') {
+      arbitrage += p * energyMWh * 0.86;
+    }
+    if (d.mode === 'fcr') {
+      fcrRevenue += (d.cars * 0.011) * 14.3;
+    }
+    if (d.mode === 'emergency') {
+      emergencyBonus += p * energyMWh * 0.86 * 1.5;
+    }
+  });
+
+  const grossRevenue = arbitrage + negativeBonus + fcrRevenue + emergencyBonus;
+  const degradation = 100 * 75 * 0.018 / 365 * 0.1;
+  const net = grossRevenue - degradation;
+
+  document.getElementById('kpiRevenue').textContent = `€ ${Math.round(grossRevenue)}`;
+  document.getElementById('kpiNegBonus').textContent = `€ ${Math.round(negativeBonus)}`;
+  document.getElementById('kpiNegSub').textContent = `${negHours} hours paid to charge`;
+  document.getElementById('kpiPerCar').textContent = `€ ${(net/100).toFixed(2)}`;
+}
+
+function renderLog(decisions, prices) {
+  const log = document.getElementById('logEntries');
+  log.innerHTML = '';
+  decisions.forEach((d, h) => {
+    if (d.mode === 'idle') return;
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    const badgeClasses = {
+      charge: 'charge',
+      discharge: 'discharge',
+      fcr: 'discharge',
+      drive: 'amber',
+      emergency: 'red',
+    };
+    const modeName = {
+      charge: 'Charge',
+      discharge: 'Discharge',
+      fcr: 'FCR',
+      drive: 'Tour',
+      emergency: 'Emergency',
+    }[d.mode];
+    entry.innerHTML = `
+      <div class="log-time">${h.toString().padStart(2,'0')}:00</div>
+      <div><span class="badge ${badgeClasses[d.mode]}">${modeName}</span></div>
+      <div class="log-reason">${d.reason}</div>
+    `;
+    log.appendChild(entry);
+  });
+}
+
+function renderLocalImpact(decisions, prices) {
+  let solarAbsorbed = 0;
+  decisions.forEach((d, h) => {
+    if (d.mode === 'charge' && h >= 10 && h <= 15) {
+      solarAbsorbed += d.cars * 11;
+    }
+  });
+  document.getElementById('netReduce').textContent = `${solarAbsorbed} kW`;
+
+  let dischargeEnergy = 0;
+  decisions.forEach((d, h) => {
+    if (d.mode === 'discharge' || d.mode === 'emergency') {
+      dischargeEnergy += d.cars * 11;
+    }
+  });
+  const co2 = Math.round(dischargeEnergy * 0.35 / 1);
+  document.getElementById('co2Saved').textContent = `${co2} kg`;
+}
+
+render();
+</script>
+</body>
+</html>
