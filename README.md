@@ -91,6 +91,7 @@ Consider two V2G modes:
 |residual battery cap. after 10 year| 88%| 82%| 74%|
 
 -> V2G is not exspected to degrade battery capacity by more than approximately 10% over a 10-year period under moderate operation
+
 -> considering the typical fleet replacement cycle, battery replacement may not necessarily be required
 
 ##  Our Prototype Website
