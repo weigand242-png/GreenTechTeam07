@@ -93,7 +93,7 @@ export default function LiveSignalCard({
           </div>
           <div className="rounded-lg border p-3">
             <Gauge
-              label="Price trend"
+              label="Price trend 1h"
               value={nextPrice === null ? "—" : fmtPrice(nextPrice)}
               unit={nextPrice === null ? "not yet published" : "€/kWh"}
               tone={nextPrice === null ? "neutral" : priceTone(nextPrice)}
@@ -120,7 +120,7 @@ export default function LiveSignalCard({
               current={price}
             />
             <WindowTrendCell
-              label="Next day"
+              label="Max window"
               avg={windows.next24hAvgEurPerKwh}
               current={price}
               isForecast={windows.next24hHasForecast}

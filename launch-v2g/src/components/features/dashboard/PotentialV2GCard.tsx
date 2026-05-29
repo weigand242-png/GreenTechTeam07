@@ -141,33 +141,50 @@ export default function PotentialV2GCard({
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <p className="text-muted-foreground text-xs uppercase tracking-wide">
-            {showForecast ? "Revenue at avg." : "Revenue at"}{" "}
-            {fmtPrice(activePrice)} €/kWh
-          </p>
-          <div className="flex items-baseline gap-2">
-            <AnimatedCounter
-              className="text-v2g-discharge text-3xl font-semibold"
-              end={revenueEur}
-              duration={0.4}
-              separator="."
-              decimals={0}
-              prefix="€ "
-            />
-            <Badge variant="secondary">
-              {showForecast && forecastHasForecastData ? "forecast" : "projected"}
-            </Badge>
+        <div
+          className={cn(
+            "grid gap-4",
+            showForecast && peakRevenueEur !== null && "grid-cols-2",
+          )}
+        >
+          <div className="flex flex-col gap-1">
+            <p className="text-muted-foreground text-xs uppercase tracking-wide">
+              {showForecast ? "Revenue at avg." : "Revenue at"}{" "}
+              {fmtPrice(activePrice)} €/kWh
+            </p>
+            <div className="flex items-baseline gap-2">
+              <AnimatedCounter
+                className="text-v2g-discharge text-3xl font-semibold"
+                end={revenueEur}
+                duration={0.4}
+                separator="."
+                decimals={0}
+                prefix="€ "
+              />
+              <Badge variant="secondary">
+                {showForecast && forecastHasForecastData ? "forecast" : "projected"}
+              </Badge>
+            </div>
           </div>
           {showForecast && peakRevenueEur !== null && (
-            <p className="text-muted-foreground text-xs">
-              Best-case at peak {fmtPrice(forecastPeakEurPerKwh as number)} €/kWh →{" "}
-              <span className="text-foreground font-semibold tabular-nums">
-                € {fmtCount(Math.round(peakRevenueEur))}
-              </span>
-              {forecastPeakHourIso &&
-                `, expected around ~${fmtHour(forecastPeakHourIso)}`}
-            </p>
+            <div className="flex flex-col gap-1">
+              <p className="text-muted-foreground text-xs uppercase tracking-wide">
+                Best-case at peak {fmtPrice(forecastPeakEurPerKwh as number)} €/kWh
+              </p>
+              <AnimatedCounter
+                className="text-v2g-discharge text-3xl font-semibold"
+                end={peakRevenueEur}
+                duration={0.4}
+                separator="."
+                decimals={0}
+                prefix="€ "
+              />
+              {forecastPeakHourIso && (
+                <p className="text-muted-foreground text-xs">
+                  expected around ~{fmtHour(forecastPeakHourIso)}
+                </p>
+              )}
+            </div>
           )}
         </div>
       </CardContent>
