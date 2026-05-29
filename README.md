@@ -7,7 +7,7 @@ Team-07:
 - Miriam Weigand
     
     
-## Next Mobility Labs | Vehicle-to-Grid
+## Challenge: Next Mobility Labs | Vehicle-to-Grid
 
 Renewable energy has a timing problem. Solar peaks at noon and wind blows at night, but demand peaks in the evening when people come home, cook and plug in their cars. Green power gets wasted when there is a surplus, and fossil plants jump in when it runs short.
 
@@ -20,7 +20,8 @@ A platform that gives advice on when to charge and when to feed power back into 
 
 ## Motivation to participate 
 Fleet owners:
-- cheap charging (planned) and expensive selling (e.g. FCR availability and mFRR participation) -> profit margin -> *financial gain*
+- cheap charging (planned) and expensive selling (e.g. FCR availability and mFRR participation) -> profit margin -> *financial gain* 
+
 - altruistic purpose (backup support for critical infrastructure such as hospitals) -> *positive media reaction*
 Grid operator:
 - access to cheaper energy compared to fossil-fuel-based generation during periods of high demand and low renewable supply -> *finacial gain*
