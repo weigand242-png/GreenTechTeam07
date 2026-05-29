@@ -1,6 +1,6 @@
 # GreenTechTeam07
 
-Team-07:
+## ``Team-07
 - Alexandra Fietze
 - Fynn Hellwig
 - Aaron Kreuzer
@@ -40,8 +40,8 @@ Grid operator:
 Start with companies that already have large EV fleets and are planning to expand them in the coming years. EVs should be stationed on company property.
 
 Examples:
-- CocaCola (1.600 Evs (2025), https://www.elektroauto-news.net/news/coca-cola-deutschland-rein-elektrisch)
-- Telekom (4.500 Evs (2025))
+- CocaCola (1.600 EVs (2025), https://www.elektroauto-news.net/news/coca-cola-deutschland-rein-elektrisch)
+- Telekom (4.500 EVs (2025))
 
 ## Contact attempts
 - Albert Hold - Telekom employee for EV fleet
