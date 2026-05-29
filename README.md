@@ -1,5 +1,12 @@
 # GreenTechTeam07
 
+Team-07:
+- Alexandra Fietze
+- Fynn Hellwig
+- Aaron Kreuzer
+- Miriam Weigand
+    
+    
 ## Next Mobility Labs | Vehicle-to-Grid
 
 Renewable energy has a timing problem. Solar peaks at noon and wind blows at night, but demand peaks in the evening when people come home, cook and plug in their cars. Green power gets wasted when there is a surplus, and fossil plants jump in when it runs short.
@@ -9,69 +16,71 @@ The fix is already parked in every company car park. Electric vehicles are mobil
 The commercial platform that connects fleet operators to the energy system is still white space. How might we build it?
 
 ## Our product
-A plattform that gives advises on when to charge and when feed power into the grid, so that fleet managers can gain money, whilst standing plugged in at the company base.
+A platform that gives advice on when to charge and when to feed power back into the grid, allowing fleet managers to generate profit while EV are plugged in at the company base.
 
 ## Motivation to participate 
 Fleet owners:
-- cheap charging (planned) and expensive selling (day-to-day FCR availability and mFRR) -> profit margin -> *financial gain*
-- altruistic purpose (Sicherheitsnetz: systemrelevante nutzer, hospital) -> *positive media reaction*
+- cheap charging (planned) and expensive selling (e.g. FCR availability and mFRR participation) -> profit margin -> *financial gain*
+- altruistic purpose (backup support for critical infrastructure such as hospitals) -> *positive media reaction*
 Grid operator:
-- offer of cheaper energy than energy from fossil fuels in time of high demand and low supply of cheap renewable energy -> *finacial gain*
-- renewable energy -> power supply without fossil fuel relyence -> *environmental friendlyness*
-- local supply -> *lower transmission losses and network costs*
+- access to cheaper energy compared to fossil-fuel-based generation during periods of high demand and low renewable supply -> *finacial gain*
+- renewable energy integration -> power supply with reduced fossil fuel dependence-> *environmental friendliness*
+- local energy supply -> *lower transmission losses and reduced network costs*
 
 
 ## Things we considered and Guide lines:
-- Fleet moving behaviour: EVs have to be usable at predictable times -> need sufficient battery left for driving the estimated ranges -> can't feed everything into grid overnight if EV needs to be ready to use at the next day 
-- try to buy power at cheep times (around midday), sell at peaks (usually around 6-8PM). If EVs are not around those critical time during week days, still optimise for max money output 
-- be conciderative of batterylife -> include temperature, never fully charge/discharge
+- Fleet movement behavior: EVs have to remain usable at predictable times -> sufficient battery capacity must remain available for estimated driving ranges -> cannot feed all energy into the grid overnight if EVs need to be ready the next day
+- try to buy power at cheap times (around midday) and sell during peaks (usually around 6–8 PM). If EVs are unavailable during critical times on weekdays, still optimise for maximum financial return
+- be considerate of battery life -> include temperature effects and avoid full charge/discharge cycles
     
 ## Target Group
-Start with companies, that have have large EV fleets and are planning to extend them in the next years. 
+Start with companies that already have large EV fleets and are planning to expand them in the coming years.
+
 Examples:
-  CocaCola (1.600 Evs (2025), https://www.elektroauto-news.net/news/coca-cola-deutschland-rein-elektrisch)
-  Telekom (4.500 Evs (2025)). 
+- CocaCola (1.600 Evs (2025), https://www.elektroauto-news.net/news/coca-cola-deutschland-rein-elektrisch)
+- Telekom (4.500 Evs (2025))
 EVs should be stationed on company property.
 
-## Contact attemps
-
+## Contact attempts
+- --------------------------------------------------------------------------------
 
 ## What we would like to know from potential costumers
-- What is the composition of their fleet. How much total battery capazity do they have? Are the subgroups e.g. small cars for buisness trips, reserve cars or larger vans for delivery?
-- What is the fleets /subgroups bahaviour? In what timeslots are the cars being used? How far do they drive on averge? How much battery capazity has to be left when car starts to be used? In what time windows would the EVs be available for V2G?
-- How does the charging infrastructur look like? Can all EVs be pluged in simultaniously? Do you use fast charge? How long does charging take?
-- On what time are you planning to replace the cars in the fleet anyway? In 3,5 or 10 years?
-- Do the batterys belong to the company or are the leased?
+- What is the composition of their fleet? How much total battery capacity do they have? Are there subgroups such as small cars for business trips, reserve cars, or larger delivery vans?
+- What is the fleet/subgroup behaviour? During which timeslots are the cars being used? How far do they drive on average? How much battery capacity has to remain available before usage? During which time windows would the EVs be available for V2G?
+- What does the charging infrastructure look like? Can all EVs be plugged in simultaneously? Do you use fast charging? How long does charging take?
+- When are you planning to replace vehicles in the fleet? In 3, 5, or 10 years?
+- Do the batteries belong to the company or are they leased?
 
-## Assumtions 
-- charging infrastructure yield each car is plugged in when on station
-- for the following calculations we assume: fleetsize 2.000 EV, 50kWh Battery each, driving usage 
+## Assumptions 
+- charging infrastructure ensures that each car is plugged in while stationed
+- for the following calculations we assume: fleet size 2.000 EVs, 50kWh battery per vehicle, driving usage approximately regular/ predictable
 
-## The development of the charging infrastrucute
-- ISO 15118-20 is being introduced January 2027, the international standard defining the advanced network and application layer requirements for Vehicle-to-Grid (V2G) communication. 
-- This rollout leads to both EV fleets and the needed charger infrastructure compatible with V2G.
-- Currently most members of our target group lack charging ports. The cost for new ones however will be amortized over time. Until then methods like Load Balancing, Power Sharing and Smart Charging can make use.
+## The development of the charging infrastructure
+- ISO 15118-20 will be introduced in January 2027. It is the international standard defining advanced network and application layer requirements for Vehicle-to-Grid  (V2G) communication.
+- This rollout will gradually make both EV fleets and charging infrastructure compatible with V2G.
+- Currently, most members of our target group lack sufficient charging ports. However, the costs for additional infrastructure are expected to amortize over time.
+- Until then, methods such as Load Balancing, Power Sharing, and Smart Charging can help optimise existing infrastructure.
 
-## Battery degredation
+## Battery degradation
 Generally:
--  LFPs allow 3.000-10.000 Full Equivalent Cycles (FEC)
+-  LFP batteries allow approximately 3,000–10,000 Full Equivalent Cycles (FEC)
 
 Assume:
 - 100km driving range per car per weekday -> 25.000km/year
 - average consumption: 17kWH/100km
-- -> occupancy: 4.250kEh/year 
-- LFP batteries with 50kWh 
-- moderate temperatures ~20°
+- yeary energy usage: 4.250kEh/year 
+- LFP batteries with 50kWh capacity
+- moderate temperatures (~20°C)
 
 Consider two V2G modes:
 
-1. moderate V2G:
-     - stay within 20%-80% State of Charge (SoC) window
-- limit power transfer additional 0.5 FEC due to V2G per day
+1. Moderate V2G:
+- stay within 20%-80% State of Charge (SoC) window
+- limit additional V2G power transfer to 0.5 FEC per day
 
-2. harder V2G:
+2. Harder V2G:
 - stay within 10%-90% State of Charge (SoC) window
-- limit power transfer additional 0.75 FEC due to V2G per day
+- limit additional V2G power transfer to 0.75 FEC per day
 
 |                          | no V2G             | moderate V2G   |  harder V2G   |
 |------------------|-------------------|--------------------|-----------------|
@@ -79,12 +88,12 @@ Consider two V2G modes:
 |residual battery cap. after 5 year| 94%|90%|85%|
 |residual battery cap. after 10 year| 88%| 82%| 74%|
 
--> V2G is not exspected tp degredate battery more then 10% on a 10 year scale
--> concidering the timescale of replacing the fleats with new cars, battery exchange no nessecarly
+-> V2G is not exspected to degrade battery capacity by more than approximately 10% over a 10-year period under moderate operation
+-> considering the typical fleet replacement cycle, battery replacement may not necessarily be required
 
 ##  Our Prototype Website
 - can be found in "launch-v2g" folder, needs to be hosted locally
 
 ## Thinks about to come onto the website:
-- Tool to hand in fleet behaviour
-- Concider temperature effects on charging efficiency/time battery
+- tool for submitting fleet behaviour data
+- consideration of temperature effects on charging efficiency, charging speed, and battery degradation
