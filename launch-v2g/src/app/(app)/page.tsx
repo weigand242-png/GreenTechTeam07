@@ -1,12 +1,20 @@
-import FleetStatusCard from "@/components/features/dashboard/FleetStatusCard";
-import GridIntensityCard from "@/components/features/dashboard/GridIntensityCard";
 import HeaderBox from "@/components/features/dashboard/HeaderBox";
+import LiveSignalCard from "@/components/features/dashboard/LiveSignalCard";
 import PotentialV2GCard from "@/components/features/dashboard/PotentialV2GCard";
-import RecentSessionsCard from "@/components/features/dashboard/RecentSessionsCard";
+import PriceLoadWeatherChart from "@/components/features/dashboard/PriceLoadWeatherChart";
 import { getFleetSnapshot } from "@/lib/sessions";
+import { currentHourSignal } from "@/lib/signal/current_hour";
+import { getActiveProvider } from "@/lib/timeseries";
 
-export default function DashboardPage() {
+// new Date() drives the current-hour signal; render on every request so the
+// signal tracks real time. External fetches still cache via next.revalidate.
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
   const snap = getFleetSnapshot();
+  const window = await getActiveProvider().getWindow();
+  const signal = currentHourSignal(window.points, new Date());
+  const isFallback = window.providerId === "live-fallback";
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 md:px-8 md:py-10">
@@ -14,24 +22,22 @@ export default function DashboardPage() {
         title="V2G Fleet Dashboard"
         subtitle="Turning idle company cars into grid-balancing batteries."
       />
-      <div className="grid gap-4 lg:grid-cols-3">
+      {isFallback && (
+        <p className="text-muted-foreground -mt-2 text-xs">
+          Live grid feed unavailable — showing static demo data.
+        </p>
+      )}
+      <div className="grid gap-4 lg:grid-cols-2">
         <PotentialV2GCard
-          className="lg:col-span-2"
           capacityKwh={snap.potentialV2GCapacityKwh}
           revenueEur={snap.potentialV2GRevenueEur}
         />
-        <GridIntensityCard />
-        <FleetStatusCard
-          totalVehicles={snap.totalVehicles}
-          totalSessions={snap.totalSessions}
-          averageBatteryKwh={snap.averageBatteryKwh}
-          vehiclesBySegment={snap.vehiclesBySegment}
-        />
-        <RecentSessionsCard
-          className="lg:col-span-2"
-          sessions={snap.recentSessions}
-        />
+        <LiveSignalCard signal={signal} />
       </div>
+      <PriceLoadWeatherChart
+        points={window.points}
+        providerId={window.providerId}
+      />
     </div>
   );
 }
