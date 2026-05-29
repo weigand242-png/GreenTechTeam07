@@ -1,6 +1,6 @@
 # GreenTechTeam07
 
-## ``Team-07
+## Team-07
 - Alexandra Fietze
 - Fynn Hellwig
 - Aaron Kreuzer
