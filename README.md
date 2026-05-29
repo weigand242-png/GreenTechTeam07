@@ -41,9 +41,12 @@ Examples:
 - CocaCola (1.600 Evs (2025), https://www.elektroauto-news.net/news/coca-cola-deutschland-rein-elektrisch)
 - Telekom (4.500 Evs (2025))
 
-
 ## Contact attempts
-- --------------------------------------------------------------------------------
+- Albert Hold Telekom employee for EV fleet
+- Patrick Eberwein Managing Director Comfort Charge Telekom
+- Dr Mark Jacquemin Mainova Head of Logistics and Mobility
+- David Reichmann Vehicle Operation at Enterprise Mobility
+- Dr. Franz Weinberger CFO Sixt SE
 
 ## What we would like to know from potential costumers
 - What is the composition of their fleet? How much total battery capacity do they have? Are there subgroups such as small cars for business trips, reserve cars, or larger delivery vans?
