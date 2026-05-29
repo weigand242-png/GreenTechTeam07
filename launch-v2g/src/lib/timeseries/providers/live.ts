@@ -1,11 +1,7 @@
 import "server-only";
 
 import { fetchSolarRadiation } from "@/lib/open_meteo_client";
-import {
-  fetchDayAheadPrices,
-  fetchGridLoad,
-  type SmardPoint,
-} from "@/lib/smard_client";
+import { fetchDayAheadPrices, type SmardPoint } from "@/lib/smard_client";
 import type { HourlyPoint, HourlySource, TimeseriesWindow } from "../types";
 import type { TimeseriesProvider } from "./types";
 import { staticJsonProvider } from "./static_json";
@@ -35,14 +31,12 @@ async function buildLiveWindow(): Promise<TimeseriesWindow> {
   const lat = Number(process.env.FLEET_LAT ?? "52.52");
   const lon = Number(process.env.FLEET_LON ?? "13.41");
 
-  const [prices, load, solar] = await Promise.all([
+  const [prices, solar] = await Promise.all([
     fetchDayAheadPrices(windowStart, windowEnd),
-    fetchGridLoad(windowStart, windowEnd),
     fetchSolarRadiation(lat, lon, windowStart, windowEnd),
   ]);
 
   const priceByHour = indexByHour(prices);
-  const loadByHour = indexByHour(load);
   const solarByHour = new Map<number, number | null>();
   for (const s of solar) solarByHour.set(hourKey(s.timestamp), s.shortwaveRadiationWPerM2);
 
@@ -55,7 +49,9 @@ async function buildLiveWindow(): Promise<TimeseriesWindow> {
     points.push({
       timestamp: new Date(ms).toISOString(),
       priceEurPerMwh: price,
-      loadMw: loadByHour.get(ms) ?? null,
+      // Grid load dropped from the chart: no free SMARD series provides a forward
+      // (future-hour) load forecast, so this is always null in the live window.
+      loadMw: null,
       solarWPerM2: solarByHour.get(ms) ?? null,
       source,
     });

@@ -80,10 +80,3 @@ export async function fetchDayAheadPrices(
 ): Promise<SmardPoint[]> {
   return fetchSeriesForWindow(4169, "DE-LU", "hour", windowStart, windowEnd);
 }
-
-export async function fetchGridLoad(
-  windowStart: Date,
-  windowEnd: Date,
-): Promise<SmardPoint[]> {
-  return fetchSeriesForWindow(410, "DE-LU", "hour", windowStart, windowEnd);
-}

@@ -42,7 +42,6 @@ ChartJS.register(
 );
 
 const COLOR_PRICE = "#ef4444";
-const COLOR_LOAD = "#3b82f6";
 const COLOR_SOLAR = "#f59e0b";
 const COLOR_NOW = "#0ea5e9";
 
@@ -136,15 +135,6 @@ export default function PriceLoadWeatherChart({
           spanGaps: true,
         },
         {
-          label: "Load (MW)",
-          data: points.map((p) => ({ x: new Date(p.timestamp).getTime(), y: p.loadMw })),
-          borderColor: COLOR_LOAD,
-          backgroundColor: COLOR_LOAD,
-          yAxisID: "yLoad",
-          tension: 0.25,
-          spanGaps: true,
-        },
-        {
           label: "Solar (W/m²)",
           data: points.map((p) => ({ x: new Date(p.timestamp).getTime(), y: p.solarWPerM2 })),
           borderColor: COLOR_SOLAR,
@@ -219,12 +209,6 @@ export default function PriceLoadWeatherChart({
           position: "left",
           title: { display: true, text: "€/MWh" },
         },
-        yLoad: {
-          type: "linear",
-          position: "right",
-          title: { display: true, text: "MW" },
-          grid: { drawOnChartArea: false },
-        },
         yWeather: {
           type: "linear",
           position: "right",
@@ -253,10 +237,10 @@ export default function PriceLoadWeatherChart({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <LineChart className="size-5" />
-          Price, load &amp; solar — next 24h
+          Price &amp; solar — next 24h
         </CardTitle>
         <CardDescription>
-          Day-ahead price, grid load, and expected solar radiation across the planning
+          Day-ahead price and expected solar radiation across the planning
           window. The stepped <em>Suggested action</em> line is an indicative
           price-quantile signal — top quartile → discharge, bottom quartile → charge.
           Source: <code>{providerId}</code>.
