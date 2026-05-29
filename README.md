@@ -34,6 +34,7 @@ Grid operator:
 - Fleet movement behavior: EVs have to remain usable at predictable times -> sufficient battery capacity must remain available for estimated driving ranges -> cannot feed all energy into the grid overnight if EVs need to be ready the next day
 - try to buy power at cheap times (around midday) and sell during peaks (usually around 6–8 PM). If EVs are unavailable during critical times on weekdays, still optimise for maximum financial return
 - be considerate of battery life -> include temperature effects and avoid full charge/discharge cycles
+- assumption: charging infrastructure ensures that each car is plugged in while stationed
     
 ## Target Group
 Start with companies that already have large EV fleets and are planning to expand them in the coming years. EVs should be stationed on company property.
@@ -55,10 +56,6 @@ Examples:
 - What does the charging infrastructure look like? Can all EVs be plugged in simultaneously? Do you use fast charging? How long does charging take?
 - When are you planning to replace vehicles in the fleet? In 3, 5, or 10 years?
 - Do the batteries belong to the company or are they leased?
-
-## Assumptions 
-- charging infrastructure ensures that each car is plugged in while stationed
-- for the following calculations we assume: fleet size 2.000 EVs, 50kWh battery per vehicle, driving usage approximately regular/ predictable
 
 ## The development of the charging infrastructure
 - ISO 15118-20 will be introduced in January 2027. It is the international standard defining advanced network and application layer requirements for Vehicle-to-Grid  (V2G) communication.
