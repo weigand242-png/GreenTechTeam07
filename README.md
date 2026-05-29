@@ -34,12 +34,12 @@ Grid operator:
 - be considerate of battery life -> include temperature effects and avoid full charge/discharge cycles
     
 ## Target Group
-Start with companies that already have large EV fleets and are planning to expand them in the coming years.
+Start with companies that already have large EV fleets and are planning to expand them in the coming years. EVs should be stationed on company property.
 
 Examples:
 - CocaCola (1.600 Evs (2025), https://www.elektroauto-news.net/news/coca-cola-deutschland-rein-elektrisch)
 - Telekom (4.500 Evs (2025))
-EVs should be stationed on company property.
+
 
 ## Contact attempts
 - --------------------------------------------------------------------------------
@@ -61,7 +61,7 @@ EVs should be stationed on company property.
 - Currently, most members of our target group lack sufficient charging ports. However, the costs for additional infrastructure are expected to amortize over time.
 - Until then, methods such as Load Balancing, Power Sharing, and Smart Charging can help optimise existing infrastructure.
 
-## Battery degradation
+## Battery degradation - How much effect has V2G?
 Generally:
 -  LFP batteries allow approximately 3,000–10,000 Full Equivalent Cycles (FEC)
 
