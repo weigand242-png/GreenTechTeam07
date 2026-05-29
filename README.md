@@ -27,18 +27,22 @@ EVs should be stationed on company property.
 
 
 ## What we would like to know from potential costumers
-- What is the composition of their fleet. How much total battery capazity do they have? Are the subgroups e.g. small cars for buisness trips or larger vans for delivery?
-- What is the fleets /subgroups bahaviour? In what timeslots are the cars being used? How far do they drive on averge? How much battery capazity has to be left when car starts to be used? -> Identify windows
-- How many spare/reserve cars does your fleet have that usually sit around?
+- What is the composition of their fleet. How much total battery capazity do they have? Are the subgroups e.g. small cars for buisness trips, reserve cars or larger vans for delivery?
+- What is the fleets /subgroups bahaviour? In what timeslots are the cars being used? How far do they drive on averge? How much battery capazity has to be left when car starts to be used? In what time windows would the EVs be available for V2G?
 - How does the charging infrastructur look like? Does everyDo you use fast charge? How long does charging take?
 - On what time are you planning to replace the cars in the fleet anyway? In 3,5 or 10 years?
 - Do the batterys belong to the company or are the leased?
 
-
 ## Assumtions
 - charging infrastructure yield each car is pluged in when on station
-- for the following calculations we assume: fleetsize 2.000 EV, 50kWh Battery each
--  
+- for the following calculations we assume: fleetsize 2.000 EV, 50kWh Battery each, driving usage 
+ 
+
+## Battery degidation
+Assume:
+- 100km driving range per car per weekday -> 25.000km/year
+- average consumption: 17kWH/100km
+- LFP batteries with 50kWh 
 ## Whats our best case cenario:
 - cars sit pluged in hole day (like it's usually happening over the weekend, or for reserve cars -> can be use completly to store/sell power ecconomically
   
