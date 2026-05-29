@@ -16,17 +16,18 @@ The fix is already parked in every company car park. Electric vehicles are mobil
 The commercial platform that connects fleet operators to the energy system is still white space. How might we build it?
 
 ## Our product
-A platform that gives advice on when to charge and when to feed power back into the grid, allowing fleet managers to generate profit while EV are plugged in at the company base.
+A platform that gives advice on when to charge and when to feed power back into the grid, allowing fleet managers to generate profit while EV are plugged in at the company base. Grid Operators can access on a local and relyable source of energy in case of emergency.
 
 ## Motivation to participate 
 Fleet owners:
 - cheap charging (planned) and expensive selling (e.g. FCR availability and mFRR participation) -> profit margin -> *financial gain* 
-
 - altruistic purpose (backup support for critical infrastructure such as hospitals) -> *positive media reaction*
+
 Grid operator:
 - access to cheaper energy compared to fossil-fuel-based generation during periods of high demand and low renewable supply -> *finacial gain*
 - renewable energy integration -> power supply with reduced fossil fuel dependence-> *environmental friendliness*
 - local energy supply -> *lower transmission losses and reduced network costs*
+- - in case of local shortages the EV fleets store enough energy as a backup support for critical infrastructure -> *power security*
 
 
 ## Things we considered and Guide lines:
